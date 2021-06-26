@@ -949,4 +949,3 @@ class _DummyPads(Module):
     def __init__(self):
         self.scl_t = TSTriple()
         self.sda_t = TSTriple()
-
