@@ -1,6 +1,8 @@
 #
 # This file has been adopted from the glasgow project
 #
+# Copyright (C) 2018 whitequark@whitequark.org
+#
 # SPDX-License-Identifier: Apache-2.0
 
 from nmigen import *
