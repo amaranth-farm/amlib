@@ -11,7 +11,7 @@ import unittest
 
 from nmigen       import *
 from .            import StreamInterface
-from ..test       import GatewareTestCase, sync_domain_test_case
+from ..test       import GatewareTestCase, sync_test_case
 
 
 class ConstantStreamGenerator(Elaboratable):
@@ -316,7 +316,7 @@ class ConstantStreamGeneratorTest(GatewareTestCase):
     FRAGMENT_UNDER_TEST = ConstantStreamGenerator
     FRAGMENT_ARGUMENTS  = {'constant_data': b"HELLO, WORLD", 'domain': "sync", 'max_length_width': 16}
 
-    @sync_domain_test_case
+    @sync_test_case
     def test_basic_transmission(self):
         dut = self.dut
 
@@ -378,7 +378,7 @@ class ConstantStreamGeneratorTest(GatewareTestCase):
         yield
         self.assertEqual((yield dut.stream.valid), 0)
 
-    @sync_domain_test_case
+    @sync_test_case
     def test_basic_start_position(self):
         dut = self.dut
 
@@ -443,7 +443,7 @@ class ConstantStreamGeneratorTest(GatewareTestCase):
         yield
         self.assertEqual((yield dut.stream.valid), 0)
 
-    @sync_domain_test_case
+    @sync_test_case
     def test_max_length(self):
         dut = self.dut
 
@@ -476,7 +476,7 @@ class ConstantStreamGeneratorWideTest(GatewareTestCase):
         max_length_width = 16
     )
 
-    @sync_domain_test_case
+    @sync_test_case
     def test_basic_transmission(self):
         dut = self.dut
 
@@ -523,7 +523,7 @@ class ConstantStreamGeneratorWideTest(GatewareTestCase):
         yield
         self.assertEqual((yield dut.stream.valid), 0)
 
-    @sync_domain_test_case
+    @sync_test_case
     def test_max_length_transmission(self):
         dut = self.dut
 
@@ -545,7 +545,7 @@ class ConstantStreamGeneratorWideTest(GatewareTestCase):
         self.assertEqual((yield dut.stream.first),   0)
         self.assertEqual((yield dut.stream.last),    1)
 
-    @sync_domain_test_case
+    @sync_test_case
     def test_very_short_max_length(self):
         dut = self.dut
 
