@@ -16,7 +16,7 @@ from nmigen.lib.cdc import FFSynchronizer
 from nmigen.lib.io  import Pin
 from nmigen.hdl.rec import DIR_FANIN, DIR_FANOUT
 
-from ..test         import LunaGatewareTestCase, sync_test_case
+from ..test         import GatewareTestCase, sync_test_case
 
 def synchronize(m, signal, *, output=None, o_domain='sync', stages=2):
     """ Convenience function. Synchronizes a signal, or equivalent collection.
@@ -147,7 +147,7 @@ def stretch_strobe_signal(m, strobe, *, to_cycles, output=None, domain=None, all
     return output
 
 
-class StrobeStretcherTest(LunaGatewareTestCase):
+class StrobeStretcherTest(GatewareTestCase):
     """ Test case for our strobe stretcher function. """
 
     def instantiate_dut(self):
