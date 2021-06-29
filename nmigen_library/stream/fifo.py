@@ -9,8 +9,8 @@ from .               import StreamInterface
 
 def connect_fifo_to_stream(m: Module, fifo: FIFOInterface, stream: StreamInterface) -> None:
     m.d.comb += [
-        stream.valid.eq(fifo.r_en),
-        fifo.r_rdy.eq(stream.ready),
+        stream.valid.eq(fifo.r_rdy & fifo.r_en),
+        fifo.r_en.eq(stream.ready),
         stream.payload.eq(fifo.r_data),
     ]
 
