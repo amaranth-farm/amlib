@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # Copyright (c) 2021 Hans Baier <hansfbaier@gmail.com>
-# SPDX-License-Identifier: CERN-OHL-W-2.0
+# SPDX-License-Identifier: BSD-3-Clause
 
 from nmigen          import *
 from nmigen.lib.fifo import FIFOInterface
