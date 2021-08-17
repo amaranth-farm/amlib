@@ -3,6 +3,7 @@
 #
 # Copyright (c) 2020 Great Scott Gadgets <info@greatscottgadgets.com>
 # Copyright (c) 2021 Hans Baier <hansfbaier@gmail.com>
+#
 # SPDX-License-Identifier: BSD-3-Clause
 
 """ Stream generators. """

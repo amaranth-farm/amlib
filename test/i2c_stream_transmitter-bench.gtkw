@@ -1,0 +1,77 @@
+[*]
+[*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
+[*] Tue Aug 17 04:33:47 2021
+[*]
+[dumpfile] "i2c_stream_transmitter.vcd"
+[dumpfile_mtime] "Tue Aug 17 04:33:24 2021"
+[dumpfile_size] 25235
+[savefile] "test/i2c_stream_transmitter-bench.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-18.000000 110100 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.i2c.
+[treeopen] top.i2c.bus.
+[treeopen] top.input_fifo.
+[sst_width] 357
+[signals_width] 322
+[sst_expanded] 1
+[sst_vpaned_height] 658
+@28
+top.clk
+top.ready
+top.valid
+top.first
+top.last
+@22
+top.payload[7:0]
+@200
+-FIFO
+@22
+top.w_data[9:0]
+@28
+top.w_en
+top.w_rdy
+top.r_rdy
+@c00022
+top.r_data[9:0]
+@28
+(0)top.r_data[9:0]
+(1)top.r_data[9:0]
+(2)top.r_data[9:0]
+(3)top.r_data[9:0]
+(4)top.r_data[9:0]
+(5)top.r_data[9:0]
+(6)top.r_data[9:0]
+(7)top.r_data[9:0]
+(8)top.r_data[9:0]
+(9)top.r_data[9:0]
+@1401200
+-group_end
+@28
+top.r_en
+@200
+-FSM
+@28
+top.fsm_state
+top.start
+top.stop
+top.write
+@200
+-I2C
+@22
+top.data_i[7:0]
+@28
+top.i2c.fsm.state
+[color] 2
+top.busy
+@200
+-
+@28
+[color] 2
+top.i2c.bus.sda_o
+[color] 2
+top.i2c.scl_o
+[pattern_trace] 1
+[pattern_trace] 0
