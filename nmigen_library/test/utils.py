@@ -76,7 +76,7 @@ class GatewareTestCase(unittest.TestCase):
         yield Signal()
 
     def traces_of_interest(self):
-        """ Returns an interable of traces to include in any generated output. """
+        """ abstract method: returns the traces to include in the generated .vcd files """
         return ()
 
     def simulate(self, *, vcd_suffix=None):
