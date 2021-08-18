@@ -57,6 +57,7 @@ class I2CStreamTransmitter(Elaboratable):
                         i2c.data_i.eq(payload),
                         i2c.write.eq(1),
                     ]
+
                     with m.If(in_fifo.r_rdy):
                         m.d.comb += in_fifo.r_en.eq(1)
 

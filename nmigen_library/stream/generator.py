@@ -790,7 +790,6 @@ class PacketListStreamerTest(GatewareTestCase):
 
     def traces_of_interest(self):
         dut = self.dut
-        m = dut.elaborate(None)
         return [self.dut.stream.valid,
                 self.dut.stream.ready,
                 self.dut.stream.payload,
