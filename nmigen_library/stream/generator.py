@@ -11,6 +11,7 @@
 import unittest
 
 from nmigen       import *
+from nmigen.compat.fhdl.bitcontainer import bits_for
 from .            import StreamInterface
 from ..test       import GatewareTestCase, sync_test_case
 
@@ -687,6 +688,248 @@ class StreamSerializer(Elaboratable):
 
         return m
 
+class PacketListStreamer(Elaboratable):
+    """ Gateware that takes a list of lists of bytes and sends them onto a stream,
+        where the first and last signals of the stream delineate the individual packets
+
+    Parameters
+    ----------
+    packets : List[List[int]]
+        the list of packet contents that will be transmitted
+
+    data_width : int
+        determines, how wide the payload signal of the output stream is
+
+    Attributes
+    ----------
+        start : Signal, in
+            Strobe that indicates when the stream should be started.
+        done : Signal, out
+            Strobe that pulses high when we're finishing a transmission.
+
+        stream : StreamInterface or custom, out
+            The generated stream interface.
+
+    """
+    def __init__(self, packets, data_width=None, stream_type=StreamInterface):
+        self.start      = Signal()
+        self.done       = Signal()
+        self.packets    = packets
+
+        # If we have a data width, apply it to our stream type; otherwise, use its defaults.
+        if data_width:
+            self.stream  = stream_type(payload_width=data_width)
+            self._data_width = data_width
+        else:
+            self.stream  = stream_type()
+            self._data_width = len(self.stream.data)
+
+    def elaborate(self, platform) -> Module:
+        m = Module()
+        packet_lengths = [len(p) for p in self.packets]
+        no_packets = len(packet_lengths)
+
+        max_length_width = bits_for(max(packet_lengths))
+        packets_flattened = [words for packet in self.packets for words in packet]
+
+        m.submodules.generator = generator = \
+            ConstantStreamGenerator(packets_flattened, max_length_width=max_length_width)
+
+        rom = Memory(width=max_length_width, depth=no_packets, init=packet_lengths)
+        m.submodules.packet_lengths_rom = packet_lengths_rom = rom.read_port(transparent=False)
+
+        total_no_bytes = len(packets_flattened)
+
+        position           = Signal(range(total_no_bytes))
+        next_position      = Signal.like(position)
+        current_packet     = Signal(range(no_packets))
+        current_packet_len = Signal(max_length_width)
+
+        m.d.comb += [
+            self.stream.stream_eq(generator.stream),
+            generator.start.eq(0),
+            generator.start_position.eq(position),
+            packet_lengths_rom.addr.eq(current_packet),
+            current_packet_len.eq(packet_lengths_rom.data),
+            generator.max_length.eq(current_packet_len),
+            next_position.eq(position + current_packet_len),
+            self.done.eq(0)
+        ]
+
+        with m.FSM():
+            with m.State("INIT"):
+                with m.If(self.start):
+                    m.d.comb += generator.start.eq(1)
+                    m.next = "WAIT"
+
+            with m.State("SEND"):
+                m.d.comb += generator.start.eq(1)
+                m.next = "WAIT"
+
+            with m.State("WAIT"):
+                with m.If(generator.done):
+                    with m.If(next_position >= total_no_bytes):
+                        m.d.comb += self.done.eq(1)
+                        m.d.sync += [
+                            position.eq(0),
+                            current_packet.eq(0),
+                        ]
+                        m.next = "INIT"
+                    with m.Else():
+                        m.d.sync += [
+                            position.eq(next_position),
+                            current_packet.eq(current_packet + 1),
+                        ]
+                        m.next = "SEND"
+
+        return m
+
+class PacketListStreamerTest(GatewareTestCase):
+    FRAGMENT_UNDER_TEST = PacketListStreamer
+    FRAGMENT_ARGUMENTS = { 'packets': [b"Hi, ", b"dear", b" ", b"nMigen-", b"-", b"users!"] }
+
+    def traces_of_interest(self):
+        dut = self.dut
+        m = dut.elaborate(None)
+        return [self.dut.stream.valid,
+                self.dut.stream.ready,
+                self.dut.stream.payload,
+                self.dut.stream.first,
+                self.dut.stream.last,
+                self.dut.start,
+                self.dut.done]
+
+    def wait_for_next_packet(self):
+        yield
+        self.assertEqual((yield self.dut.stream.valid), 0)
+        yield
+        self.assertEqual((yield self.dut.stream.valid), 0)
+
+    @sync_test_case
+    def test_basic_transmission(self):
+        dut = self.dut
+
+        # We shouldn't see a transmission before we request a start.
+        yield from self.advance_cycles(10)
+        self.assertEqual((yield dut.stream.valid), 0)
+        self.assertEqual((yield dut.stream.first), 0)
+        self.assertEqual((yield dut.stream.last),  0)
+
+        # Once we pulse start, we should see the transmission start,
+        # and we should see our first byte of data.
+        yield from self.pulse(dut.start)
+        yield # needs one cycle to start
+        self.assertEqual((yield dut.stream.valid),   1)
+        self.assertEqual((yield dut.stream.payload), ord('H'))
+        self.assertEqual((yield dut.stream.first),   1)
+
+        # That data should remain there until we accept it.
+        yield from self.advance_cycles(10)
+        self.assertEqual((yield dut.stream.valid),   1)
+        self.assertEqual((yield dut.stream.payload), ord('H'))
+
+        # Once we indicate that we're accepting data...
+        yield dut.stream.ready.eq(1)
+        yield
+
+        # ... we should start seeing the remainder of our transmission.
+        for i in 'i,':
+            yield
+            self.assertEqual((yield dut.stream.payload), ord(i))
+            self.assertEqual((yield dut.stream.first),   0)
+
+        # end of the first packet has to be marked by the 'last' signal
+        yield
+        self.assertEqual((yield dut.stream.payload), ord(' '))
+        self.assertEqual((yield dut.stream.first),   0)
+        self.assertEqual((yield dut.stream.last),    1)
+
+        # first packet done, takes two cycles to load the next
+        yield from self.wait_for_next_packet()
+
+        # If we drop the 'accepted', we should still see the next byte...
+        yield dut.stream.ready.eq(0)
+        yield
+        self.assertEqual((yield dut.stream.payload), ord('d'))
+
+        # ... but that byte shouldn't be accepted, so we should remain there.
+        yield
+        self.assertEqual((yield dut.stream.payload), ord('d'))
+
+        # If we start accepting data again...
+        yield dut.stream.ready.eq(1)
+        yield
+
+        # ... we should see the second packet
+        for i in 'ear':
+            yield
+            self.assertEqual((yield dut.stream.payload), ord(i))
+            if i == 'd':
+                self.assertEqual((yield dut.stream.first), 1)
+                self.assertEqual((yield dut.stream.last),  0)
+            if i == 'r':
+                self.assertEqual((yield dut.stream.first), 0)
+                self.assertEqual((yield dut.stream.last),  1)
+
+        # two cycles to load the next packet
+        yield from self.wait_for_next_packet()
+
+        # the third packet contains a single space, so it should
+        # have both first and last flags set
+        yield
+        self.assertEqual((yield dut.stream.payload), ord(' '))
+        self.assertEqual((yield dut.stream.first), 1)
+        self.assertEqual((yield dut.stream.last),  1)
+
+        # two cycles to load the next packet
+        yield from self.wait_for_next_packet()
+
+        # now we should see the fourth packet
+        for i in 'nMigen-':
+            yield
+            self.assertEqual((yield dut.stream.payload), ord(i))
+            if i == 'd':
+                self.assertEqual((yield dut.stream.first), 1)
+                self.assertEqual((yield dut.stream.last),  0)
+            if i == '-':
+                self.assertEqual((yield dut.stream.first), 0)
+                self.assertEqual((yield dut.stream.last),  1)
+
+
+        # two cycles to load the next packet
+        yield from self.wait_for_next_packet()
+
+        # the fifth packet contains a single dash, so it should
+        # have both first and last flags set
+        yield
+        self.assertEqual((yield dut.stream.payload), ord('-'))
+        self.assertEqual((yield dut.stream.first), 1)
+        self.assertEqual((yield dut.stream.last),  1)
+
+        # two cycles to load the next packet
+        yield from self.wait_for_next_packet()
+
+        # now we should see the sixth packet
+        for i in 'users!':
+            yield
+            self.assertEqual((yield dut.stream.payload), ord(i))
+            if i == 'u':
+                self.assertEqual((yield dut.stream.first), 1)
+                self.assertEqual((yield dut.stream.last),  0)
+            if i == '!':
+                self.assertEqual((yield dut.stream.first), 0)
+                self.assertEqual((yield dut.stream.last),  1)
+
+        # After the last datum, we should see valid drop to '0'.
+        yield
+        self.assertEqual((yield dut.stream.valid), 0)
+        self.assertEqual((yield dut.done),         1)
+        yield from self.pulse(dut.start)
+        self.assertEqual((yield dut.stream.valid),   1)
+        self.assertEqual((yield dut.stream.payload), ord('H'))
+        self.assertEqual((yield dut.stream.first),   1)
+        yield
+        yield
 
 if __name__ == "__main__":
     unittest.main()
