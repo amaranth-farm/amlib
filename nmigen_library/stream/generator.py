@@ -7,11 +7,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """ Stream generators. """
-
-import unittest
-
 from nmigen       import *
-from nmigen.compat.fhdl.bitcontainer import bits_for
+from nmigen.utils import bits_for
 from .            import StreamInterface
 from ..test       import GatewareTestCase, sync_test_case
 
@@ -929,6 +926,3 @@ class PacketListStreamerTest(GatewareTestCase):
         self.assertEqual((yield dut.stream.first),   1)
         yield
         yield
-
-if __name__ == "__main__":
-    unittest.main()
