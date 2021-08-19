@@ -29,9 +29,9 @@ Dividing Counter
     :type: netlistsvg
     :module: dividing_counter
 
-NRZI Decoder
+NRZI Encoder
 ------------
 
-.. hdl-diagram:: build/util/nrzidecoder.v
+.. hdl-diagram:: build/util/nrziencoder.v
    :type: netlistsvg
-   :module: nrzi_decoder
+   :module: nrzi_encoder

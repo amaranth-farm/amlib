@@ -1,0 +1,28 @@
+[*]
+[*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
+[*] Thu Aug 19 02:59:32 2021
+[*]
+[dumpfile] "test_EdgeToPulseTest_test_basic.vcd"
+[dumpfile_mtime] "Thu Aug 19 02:57:34 2021"
+[dumpfile_size] 960
+[savefile] "/devel/HDL/src/nmigen-library/test/edgetopulse.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-15.100000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 444
+[signals_width] 270
+[sst_expanded] 1
+[sst_vpaned_height] 654
+@28
+top.clk
+@29
+[color] 3
+top.edge_last
+@28
+[color] 3
+top.edge_in
+[color] 1
+top.pulse_out
+[pattern_trace] 1
+[pattern_trace] 0

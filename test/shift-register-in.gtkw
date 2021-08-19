@@ -1,0 +1,28 @@
+[*]
+[*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
+[*] Thu Aug 19 03:54:55 2021
+[*]
+[dumpfile] "test_InputShiftRegisterTest_test_basic.vcd"
+[dumpfile_mtime] "Thu Aug 19 03:53:11 2021"
+[dumpfile_size] 2437
+[savefile] "/devel/HDL/src/nmigen-library/test/shift-register-in.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-14.478533 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 444
+[signals_width] 270
+[sst_expanded] 1
+[sst_vpaned_height] 654
+@28
+top.rst
+top.clk
+[color] 1
+top.enable_in
+[color] 3
+top.bit_in
+@29
+[color] 1
+top.value_out[7:0]
+[pattern_trace] 1
+[pattern_trace] 0

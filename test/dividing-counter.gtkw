@@ -1,0 +1,35 @@
+[*]
+[*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
+[*] Thu Aug 19 03:44:29 2021
+[*]
+[dumpfile] "/devel/HDL/src/nmigen-library/test_DividingCounterTest_test_basic.vcd"
+[dumpfile_mtime] "Thu Aug 19 03:26:56 2021"
+[dumpfile_size] 3113
+[savefile] "/devel/HDL/src/nmigen-library/test/dividing-counter.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-15.888720 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 512
+[signals_width] 462
+[sst_expanded] 1
+[sst_vpaned_height] 654
+@28
+top.clk
+top.active_in
+@29
+[color] 2
+top.reset_in
+@24
+[color] 3
+top.counter_out[4:0]
+[color] 2
+top.dividing_cycle_counter[2:0]
+@28
+[color] 1
+top.dividable_out
+@22
+[color] 6
+top.divided_counter_out[4:0]
+[pattern_trace] 1
+[pattern_trace] 0

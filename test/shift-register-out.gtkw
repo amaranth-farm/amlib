@@ -1,0 +1,42 @@
+[*]
+[*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
+[*] Thu Aug 19 04:11:50 2021
+[*]
+[dumpfile] "test_OutputShiftRegisterTest_test_basic.vcd"
+[dumpfile_mtime] "Thu Aug 19 04:08:49 2021"
+[dumpfile_size] 1367
+[savefile] "/devel/HDL/src/nmigen-library/test/shift-register-out.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-14.492319 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 427
+[signals_width] 225
+[sst_expanded] 1
+[sst_vpaned_height] 644
+@28
+top.clk
+[color] 3
+top.enable_in
+[color] 3
+top.we_in
+@22
+top.value_in[7:0]
+@800022
+top.value[7:0]
+@28
+(0)top.value[7:0]
+(1)top.value[7:0]
+(2)top.value[7:0]
+(3)top.value[7:0]
+(4)top.value[7:0]
+(5)top.value[7:0]
+(6)top.value[7:0]
+(7)top.value[7:0]
+@1001200
+-group_end
+@29
+[color] 2
+top.bit_out
+[pattern_trace] 1
+[pattern_trace] 0
