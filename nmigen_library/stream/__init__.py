@@ -1,13 +1,15 @@
 #
-# This file has been adopted from the LUNA project
+# This file has been adapted from the LUNA project
 #
 # Copyright (c) 2020 Great Scott Gadgets <info@greatscottgadgets.com>
+# Copyright (c) 2021 Hans Baier <hansfbaier@gmail.com>
+#
 # SPDX-License-Identifier: BSD-3-Clause
 
 """ Core stream definitions. """
 
-from nmigen         import Elaboratable, Signal, Module
-from nmigen.hdl.rec import Record, DIR_FANIN, DIR_FANOUT
+from nmigen          import *
+from nmigen.lib.fifo import FIFOInterface
 
 class StreamInterface(Record):
     """ Simple record implementing a unidirectional data stream.
@@ -118,3 +120,27 @@ class StreamInterface(Record):
             name = "payload"
 
         return super().__getattr__(name)
+
+
+def connect_fifo_to_stream(fifo: FIFOInterface, stream: StreamInterface) -> None:
+    """Connects the output of the FIFO to the of the stream. Data flows from the fifo the stream.
+       This function does not connect first/last signals
+    """
+
+    return [
+        stream.valid.eq(fifo.r_rdy & fifo.r_en),
+        fifo.r_en.eq(stream.ready),
+        stream.payload.eq(fifo.r_data),
+    ]
+
+
+def connect_stream_to_fifo(stream: StreamInterface, fifo: FIFOInterface) -> None:
+    """Connects the stream to the input of the FIFO. Data flows from the stream to the FIFO.
+       This function does not connect first/last signals
+    """
+
+    return [
+        fifo.w_en.eq(stream.valid),
+        stream.ready.eq(fifo.w_rdy),
+        fifo.w_data.eq(stream.payload),
+    ]
