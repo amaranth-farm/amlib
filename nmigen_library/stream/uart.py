@@ -9,9 +9,8 @@
 from nmigen     import Elaboratable, Module, Signal, Cat
 from nmigen_soc import wishbone, memory
 
-
 from ..stream       import StreamInterface
-from ..test         import LunaGatewareTestCase, sync_test_case
+from ..test         import GatewareTestCase, sync_test_case
 
 
 class UARTTransmitter(Elaboratable):
@@ -134,7 +133,7 @@ class UARTTransmitter(Elaboratable):
         return m
 
 
-class UARTTransmitterTest(LunaGatewareTestCase):
+class UARTTransmitterTest(GatewareTestCase):
     DIVISOR = 10
 
     FRAGMENT_UNDER_TEST = UARTTransmitter
@@ -367,7 +366,7 @@ class UARTMultibyteTransmitter(Elaboratable):
         return m
 
 
-class UARTMultibyteTransmitterTest(LunaGatewareTestCase):
+class UARTMultibyteTransmitterTest(GatewareTestCase):
     DIVISOR = 10
 
     FRAGMENT_UNDER_TEST = UARTMultibyteTransmitter

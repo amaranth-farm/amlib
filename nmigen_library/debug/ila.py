@@ -27,7 +27,7 @@ from vcd.gtkw        import GTKWSave
 from ..stream         import StreamInterface
 from ..stream.uart    import UARTMultibyteTransmitter
 from ..io.spi         import SPIDeviceInterface, SPIBus, SPIGatewareTestCase
-from ..test.utils     import LunaGatewareTestCase, sync_test_case
+from ..test.utils     import GatewareTestCase, sync_test_case
 
 
 class IntegratedLogicAnalyzer(Elaboratable):
@@ -179,7 +179,7 @@ class IntegratedLogicAnalyzer(Elaboratable):
         return m
 
 
-class IntegratedLogicAnalyzerTest(LunaGatewareTestCase):
+class IntegratedLogicAnalyzerTest(GatewareTestCase):
 
     def instantiate_dut(self):
         self.input_a = Signal()
