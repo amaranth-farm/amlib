@@ -2,7 +2,7 @@
 [*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
 [*] Tue Aug 17 04:33:47 2021
 [*]
-[dumpfile] "i2c_stream_transmitter.vcd"
+[dumpfile] "test_I2CStreamTransmitterTest_test_basic.vcd"
 [dumpfile_mtime] "Tue Aug 17 04:33:24 2021"
 [dumpfile_size] 25235
 [savefile] "test/i2c_stream_transmitter-bench.gtkw"

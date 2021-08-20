@@ -9,7 +9,8 @@ from nmigen.lib.fifo import SyncFIFO
 
 from . import StreamInterface
 from .fifo import connect_stream_to_fifo
-from ..io.i2c import I2CInitiator
+from ..io.i2c import I2CInitiator, I2CTestbench
+from ..test import GatewareTestCase, sync_test_case
 
 class I2CStreamTransmitter(Elaboratable):
     def __init__(self, pads, period_cyc, clk_stretch=True, fifo_depth=16):
@@ -70,3 +71,34 @@ class I2CStreamTransmitter(Elaboratable):
                     m.next = "IDLE"
 
         return m
+
+
+class I2CStreamTransmitterTest(GatewareTestCase):
+    FRAGMENT_UNDER_TEST = I2CStreamTransmitter
+    FRAGMENT_ARGUMENTS = {'pads': I2CTestbench(), 'period_cyc': 4, 'clk_stretch': False, }
+
+    @sync_test_case
+    def test_basic(self):
+        dut = self.dut
+        yield
+        yield
+        yield dut.stream_in.valid.eq(1)
+        yield dut.stream_in.payload.eq(0x55)
+        yield dut.stream_in.first.eq(1)
+        yield
+        yield dut.stream_in.valid.eq(1)
+        yield dut.stream_in.payload.eq(0xaa)
+        yield dut.stream_in.first.eq(1)
+        yield
+        yield dut.stream_in.first.eq(0)
+        yield dut.stream_in.payload.eq(0xbb)
+        yield
+        yield dut.stream_in.last.eq(1)
+        yield dut.stream_in.payload.eq(0xcc)
+        yield
+        yield dut.stream_in.valid.eq(0)
+        yield dut.stream_in.last.eq(0)
+        yield
+        yield
+        yield
+        for _ in range(330): yield
