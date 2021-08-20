@@ -27,12 +27,17 @@ This library contains:
 * stream to I2C
 * stream to/from FIFO
 * stream arbiter
+* stream to UART
+
+**nmigen_library.debug**
+: Internal logic analyzer (ILA)
 
 **nmigen_library.test**
 : Convenience tools for automated testing of simulations, CRC
 
 **nmigen_library.utils**
 : basic utility modules:
+  * bit manipulation functions
   * one-hot-multiplexer
   * synchronizer
   * strobe stretcher
