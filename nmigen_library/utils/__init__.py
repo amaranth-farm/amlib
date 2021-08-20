@@ -3,12 +3,23 @@
 #
 """ Simple utility constructs  """
 
-from nmigen import Module, Signal, Cat
-from .cdc import synchronize
+from nmigen import Signal
+
+from .bits import bits
+from .cdc import synchronize, stretch_strobe_signal
+from .bus import OneHotMultiplexer
+from .lfsr import LinearFeedbackShiftRegister
+from .dividingcounter import DividingCounter
+from .edgetopulse import EdgeToPulse
+from .nrziencoder import NRZIEncoder
+from .shiftregister import InputShiftRegister, OutputShiftRegister
 
 __all__ = [
     'rising_edge_detected', 'falling_edge_detected', 'any_edge_detected',
-    'past_value_of', 'synchronize'
+    'past_value_of','synchronize', 'EdgeToPulse', 'bits',
+    'synchronize', 'stretch_strobe_signal',
+    'OneHotMultiplexer', 'LinearFeedbackShiftRegister', 'DividingCounter',
+    'NRZIEncoder', 'InputShiftRegister', 'OutputShiftRegister'
 ]
 
 def _single_edge_detector(m, signal, *, domain, edge='rising'):
