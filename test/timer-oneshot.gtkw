@@ -1,0 +1,33 @@
+[*]
+[*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
+[*] Fri Aug 20 22:45:24 2021
+[*]
+[dumpfile] "test_TimerTest_test_oneshot.vcd"
+[dumpfile_mtime] "Fri Aug 20 22:44:09 2021"
+[dumpfile_size] 893
+[savefile] "test/timer-oneshot.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-14.000000 60940 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 357
+[signals_width] 285
+[sst_expanded] 1
+[sst_vpaned_height] 658
+@28
+top.clk
+@22
+top.load_in[31:0]
+top.reload_in[31:0]
+@29
+[color] 2
+top.fsm_state
+@22
+[color] 2
+top.counter_out[31:0]
+@28
+top.start
+top.done
+[pattern_trace] 1
+[pattern_trace] 0

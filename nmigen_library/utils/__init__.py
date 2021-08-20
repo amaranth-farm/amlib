@@ -5,21 +5,23 @@
 
 from nmigen import Signal
 
-from .bits import bits
-from .cdc import synchronize, stretch_strobe_signal
-from .bus import OneHotMultiplexer
-from .lfsr import LinearFeedbackShiftRegister
+from .bits            import bits
+from .cdc             import synchronize, stretch_strobe_signal
+from .bus             import OneHotMultiplexer
+from .lfsr            import LinearFeedbackShiftRegister
 from .dividingcounter import DividingCounter
-from .edgetopulse import EdgeToPulse
-from .nrziencoder import NRZIEncoder
-from .shiftregister import InputShiftRegister, OutputShiftRegister
+from .edgetopulse     import EdgeToPulse
+from .nrziencoder     import NRZIEncoder
+from .shiftregister   import InputShiftRegister, OutputShiftRegister
+from .timer           import Timer
 
 __all__ = [
     'rising_edge_detected', 'falling_edge_detected', 'any_edge_detected',
     'past_value_of','synchronize', 'EdgeToPulse', 'bits',
     'synchronize', 'stretch_strobe_signal',
     'OneHotMultiplexer', 'LinearFeedbackShiftRegister', 'DividingCounter',
-    'NRZIEncoder', 'InputShiftRegister', 'OutputShiftRegister'
+    'NRZIEncoder', 'InputShiftRegister', 'OutputShiftRegister',
+    'Timer'
 ]
 
 def _single_edge_detector(m, signal, *, domain, edge='rising'):
