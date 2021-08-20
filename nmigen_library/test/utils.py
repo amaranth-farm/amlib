@@ -98,6 +98,18 @@ class GatewareTestCase(unittest.TestCase):
         else:
             self.sim.run()
 
+    def shouldBeLow(self, signal):
+        self.assertEqual((yield signal), 0)
+
+    def shouldBeHigh(self, signal):
+        self.assertEqual((yield signal), 1)
+
+    def shouldBeZero(self, signal):
+        self.assertEqual((yield signal), 0)
+
+    def shouldBeNonZero(self, signal):
+        self.assertGreater((yield signal), 0)
+
     @staticmethod
     def pulse(signal, *, step_after=True):
         """ Helper method that asserts a signal for a cycle. """
