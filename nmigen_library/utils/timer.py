@@ -3,7 +3,7 @@ from nmigen.build import Platform
 from ..test       import GatewareTestCase, sync_test_case
 
 class Timer(Elaboratable):
-    def __init__(self, width=32, load=None, reload=None):
+    def __init__(self, *, width=32, load=None, reload=None):
         self._width = width
         self.load_in     = Signal(width, name="load")   if load   == None else Const(load, width)
         self.reload_in   = Signal(width, name="reload") if reload == None else Const(reload, width)
@@ -70,7 +70,7 @@ class TimerTest(GatewareTestCase):
         yield from self.shouldBeLow(dut.done)
 
         yield from self.advance_cycles(8)
-        self.assertEquals((yield dut.counter_out), 1)
+        self.assertEqual((yield dut.counter_out), 1)
         yield from self.shouldBeLow(dut.done)
 
         # counter is zero, transition to DONE
