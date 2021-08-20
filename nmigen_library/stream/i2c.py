@@ -8,7 +8,7 @@ from nmigen.build import Platform
 from nmigen.lib.fifo import SyncFIFO
 
 from . import StreamInterface
-from .fifo import connect_stream_to_fifo
+from . import connect_stream_to_fifo
 from ..io.i2c import I2CInitiator, I2CTestbench
 from ..test import GatewareTestCase, sync_test_case
 
