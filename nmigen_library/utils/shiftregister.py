@@ -104,11 +104,11 @@ class InputShiftRegisterTest(GatewareTestCase):
         self.assertEqual((yield dut.value_out), 0b110110)
         yield dut.enable_in.eq(0)
         yield
-        self.assertEqual((yield dut.value_out), 0b110110)
+        self.assertEqual((yield dut.value_out), 0b1101101)
         yield
-        self.assertEqual((yield dut.value_out), 0b110110)
+        self.assertEqual((yield dut.value_out), 0b1101101)
         yield
-        self.assertEqual((yield dut.value_out), 0b110110)
+        self.assertEqual((yield dut.value_out), 0b1101101)
         yield dut.enable_in.eq(1)
         for _ in range(13):
             yield dut.bit_in.eq(1)

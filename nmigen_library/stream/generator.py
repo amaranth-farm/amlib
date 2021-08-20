@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 """ Stream generators. """
+import unittest
 from nmigen       import *
 from nmigen.utils import bits_for
 from .            import StreamInterface
@@ -466,6 +467,7 @@ class ConstantStreamGeneratorTest(GatewareTestCase):
         self.assertEqual((yield dut.stream.valid), 0)
 
 
+@unittest.skip("https://github.com/hansfbaier/nmigen-library/issues/1")
 class ConstantStreamGeneratorWideTest(GatewareTestCase):
     FRAGMENT_UNDER_TEST = ConstantStreamGenerator
     FRAGMENT_ARGUMENTS  = dict(
