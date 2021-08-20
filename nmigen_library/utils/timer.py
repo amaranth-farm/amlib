@@ -5,8 +5,8 @@ from ..test       import GatewareTestCase, sync_test_case
 class Timer(Elaboratable):
     def __init__(self, width=32, load=None, reload=None):
         self._width = width
-        self.load_in     = Signal(width) if load   == None else Const(load, width)
-        self.reload_in   = Signal(width) if reload == None else Const(reload, width)
+        self.load_in     = Signal(width, name="load")   if load   == None else Const(load, width)
+        self.reload_in   = Signal(width, name="reload") if reload == None else Const(reload, width)
         self.counter_out = Signal(width)
         self.start       = Signal()
         self.done        = Signal()
