@@ -39,7 +39,6 @@ This library contains:
   * dividing counter
   * edge to pulse
   * edge detectors
-  * delay
   * linear feedback shift register (LFSR)
   * NRZI encoder
   * shift register
