@@ -3,8 +3,9 @@ from nmigen.build import Platform
 from ..test       import GatewareTestCase, sync_test_case
 
 class Timer(Elaboratable):
-    def __init__(self, *, width=32, load=None, reload=None):
+    def __init__(self, *, width=32, load=None, reload=None, allow_restart=True):
         self._width = width
+        self._allow_restart = allow_restart
         self.load_in     = Signal(width, name="load")   if load   == None else load
         self.reload_in   = Signal(width, name="reload") if reload == None else reload
         self.counter_out = Signal(width)
@@ -43,8 +44,9 @@ class Timer(Elaboratable):
                     # exactly 'reload_in' cycles later
                     m.d.sync += counter.eq(self.reload_in - 1)
                     m.next = "RUNNING"
-                with m.Else():
-                    m.next = "IDLE"
+                if self._allow_restart:
+                    with m.Else():
+                        m.next = "IDLE"
 
         return m
 
@@ -126,21 +128,17 @@ class TimerTest(GatewareTestCase):
 
 class TimerConstReloadTest(GatewareTestCase):
     FRAGMENT_UNDER_TEST = Timer
-    FRAGMENT_ARGUMENTS = {'width': 32, 'reload': 0}
+    FRAGMENT_ARGUMENTS = {'width': 32, 'load': 10, 'reload': 0}
 
     @sync_test_case
     def test_oneshot(self):
         dut = self.dut
-        yield
-
         # load initial value
-        yield dut.load_in.eq(10)
         yield
         yield from self.shouldBeLow(dut.done)
-        yield from self.shouldBeZero(dut.counter_out)
+        self.assertEqual((yield dut.counter_out), 10)
 
         # start timer
-        yield dut.load_in.eq(0)
         yield from self.pulse(dut.start, step_after=True)
         self.assertEqual((yield dut.counter_out), 9)
         yield from self.shouldBeLow(dut.done)
@@ -154,12 +152,13 @@ class TimerConstReloadTest(GatewareTestCase):
         yield from self.shouldBeHigh(dut.done)
         yield from self.shouldBeZero(dut.counter_out)
 
+        yield
+        yield from self.shouldBeZero(dut.counter_out)
+
         for _ in range(5):
             yield
             yield from self.shouldBeLow(dut.done)
-            yield from self.shouldBeZero(dut.counter_out)
-
-        yield from self.shouldBeZero(dut.counter_out)
+            self.assertEqual((yield dut.counter_out), 10)
 
 class TimerConstLoadTest(GatewareTestCase):
     FRAGMENT_UNDER_TEST = Timer
