@@ -1,0 +1,38 @@
+[*]
+[*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
+[*] Sun Aug 22 23:16:26 2021
+[*]
+[dumpfile] "test_I2STransmitterTest_test_basic.vcd"
+[dumpfile_mtime] "Sun Aug 22 23:13:25 2021"
+[dumpfile_size] 118165
+[savefile] "test/i2s-transmitter.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-20.000000 130000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 357
+[signals_width] 255
+[sst_expanded] 1
+[sst_vpaned_height] 658
+@28
+top.clk
+@22
+top.payload[23:0]
+@28
+top.valid
+top.ready
+@22
+top.tx_fifo.level[4:0]
+@28
+top.r_en
+top.fsm_state
+@29
+[color] 2
+top.bit_clock
+[color] 2
+top.word_clock
+[color] 2
+top.serial_data_out
+[pattern_trace] 1
+[pattern_trace] 0
