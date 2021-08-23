@@ -9,6 +9,7 @@ This library contains:
 : Basic communication cores:
   * UART
   * I2C
+  * I2S (currently transmit only)
   * SPI
 
 **nmigen_library.soc**
