@@ -16,7 +16,7 @@ from nmigen.lib.fifo import SyncFIFO
 
 from ..stream import StreamInterface, connect_stream_to_fifo
 from ..utils  import rising_edge_detected, falling_edge_detected
-from ..test import GatewareTestCase, sync_test_case
+from ..test   import GatewareTestCase, sync_test_case
 
 class I2S_FORMAT(Enum):
     STANDARD       = 1
@@ -37,6 +37,13 @@ class I2STransmitter(Elaboratable):
             I2S bit clock
         serial_data_out: Signal(), ouput
             transmitted I2S serial data
+        underflow_out: Signal(), output
+            is strobed, when the fifo was empty at the time to transmit a sample
+        mismatch_out: Signal(), output
+            is strobed, when the first flag set does not match the left channel
+                        and when the first flag clear does not match the right channel
+        fifo_level_out: Signal()
+            reports the current FIFO fill level
 
         Parameters
         ----------
@@ -89,6 +96,9 @@ class I2STransmitter(Elaboratable):
         self.word_select_in   = Signal()
         self.serial_clock_in  = Signal()
         self.serial_data_out  = Signal()
+        self.underflow_out    = Signal()
+        self.mismatch_out     = Signal()
+        self.fifo_level_out   = Signal(range(fifo_depth + 1))
 
     def elaborate(self, platform: Platform) -> Module:
         m = Module()
@@ -132,10 +142,17 @@ class I2STransmitter(Elaboratable):
             right_channel.eq(~left_channel)
         ]
 
-        m.submodules.tx_fifo = tx_fifo = SyncFIFO(width=fifo_data_width, depth=self._fifo_depth)
+        m.submodules.tx_fifo = tx_fifo = SyncFIFO(width=fifo_data_width + 1, depth=self._fifo_depth)
+
+        # first marks left channel
+        first_flag = fifo_data_width
         m.d.comb += [
             connect_stream_to_fifo(self.stream_in, tx_fifo),
+            tx_fifo.w_data[first_flag].eq(self.stream_in.first),
             tx_fifo.r_en.eq(0),
+            self.fifo_level_out.eq(tx_fifo.level),
+            self.underflow_out.eq(0),
+            self.mismatch_out.eq(0),
         ]
 
         with m.FSM(reset="IDLE"):
@@ -191,11 +208,16 @@ class I2STransmitter(Elaboratable):
                         with m.If(bit_clock_rose):
                             with m.If((tx_cnt == 0)):
                                 with m.If(right_channel):
-                                    m.d.sync += [
-                                        tx_cnt.eq(sample_width),
-                                        tx_buf.eq(Cat(tx_fifo.r_data, offset))
-                                    ]
-                                    m.d.comb += tx_fifo.r_en.eq(1)
+                                    m.d.sync += tx_cnt.eq(sample_width),
+                                    with m.If(tx_fifo.r_rdy):
+                                        with m.If(tx_fifo.r_data[first_flag]):
+                                            m.d.sync += tx_buf.eq(Cat(tx_fifo.r_data, offset))
+                                            m.d.comb += tx_fifo.r_en.eq(1)
+                                        with m.Else():
+                                            m.d.comb += self.mismatch_out.eq(1)
+                                    with m.Else():
+                                        m.d.comb += self.underflow_out.eq(1)
+
                                     m.next = "RIGHT_FALL"
                                 with m.Else():
                                     m.next = "LEFT_WAIT"
@@ -224,11 +246,15 @@ class I2STransmitter(Elaboratable):
                 with m.Else():
                     with m.If(bit_clock_rose):
                         with m.If((tx_cnt == 0) & left_channel):
-                            m.d.sync += [
-                                tx_cnt.eq(sample_width),
-                                tx_buf.eq(Cat(tx_fifo.r_data, offset))
-                            ]
-                            m.d.comb += tx_fifo.r_en.eq(1)
+                            m.d.sync += tx_cnt.eq(sample_width)
+                            with m.If(tx_fifo.r_rdy):
+                                with m.If(~tx_fifo.r_data[first_flag]):
+                                    m.d.sync += tx_buf.eq(Cat(tx_fifo.r_data, offset))
+                                    m.d.comb += tx_fifo.r_en.eq(1)
+                                with m.Else():
+                                    m.d.comb += self.mismatch_out.eq(1)
+                            with m.Else():
+                                m.d.comb += self.underflow_out.eq(1)
                             m.next = "LEFT_FALL"
                         with m.Elif(tx_cnt > 0):
                             m.next = "RIGHT_FALL"
