@@ -498,61 +498,24 @@ class I2SReceiver(Elaboratable):
 
         return m
 
+_TEST_SAMPLES = [0x111111, 0x222222, 0x333333, 0x444444, 0x555555, 0x666666,
+                 0xaaaaaa, 0xbbbbbb, 0xcccccc, 0xdddddd, 0xeeeeee, 0xffffff]
+
 def send_i2s(stream: StreamInterface):
     payload = stream.payload
     valid   = stream.valid
     first   = stream.first
 
-    yield
+    is_first = True
 
+    yield
     yield valid.eq(1)
-    yield first.eq(1)
-    yield payload.eq(0x111111)
-    yield
 
-    yield payload.eq(0x222222)
-    yield first.eq(0)
-    yield
-
-    yield payload.eq(0x333333)
-    yield first.eq(1)
-    yield
-
-    yield payload.eq(0x444444)
-    yield first.eq(0)
-    yield
-
-    yield payload.eq(0x555555)
-    yield first.eq(1)
-    yield
-
-    yield payload.eq(0x666666)
-    yield first.eq(0)
-    yield
-
-    yield payload.eq(0xaaaaaa)
-    yield first.eq(1)
-    yield
-
-    yield payload.eq(0xbbbbbb)
-    yield first.eq(0)
-    yield
-
-    yield payload.eq(0xcccccc)
-    yield first.eq(1)
-    yield
-
-    yield payload.eq(0xdddddd)
-    yield first.eq(0)
-    yield
-
-    yield payload.eq(0xeeeeee)
-    yield first.eq(1)
-    yield
-
-    yield payload.eq(0xffffff)
-    yield first.eq(0)
-    yield
+    for value_sent in _TEST_SAMPLES:
+        yield first.eq(int(is_first))
+        yield payload.eq(value_sent)
+        yield
+        is_first = not is_first
 
     yield valid.eq(0)
     yield
@@ -631,8 +594,23 @@ class I2SLoopbackTest(GatewareTestCase):
     @sync_test_case
     def test_basic(self):
         dut = self.dut
+        valid   = dut.stream_out.valid
+        payload = dut.stream_out.payload
+        first   = dut.stream_out.first
+        last    = dut.stream_out.last
+        is_first = True
 
         yield from send_i2s(dut.stream_in)
+
+        for expected_sample in _TEST_SAMPLES:
+            yield from self.wait_until(valid)
+            actual_sample = (yield payload)
+            print(f"expected: {hex(expected_sample)}, actual: {hex(actual_sample)}")
+            self.assertEqual(expected_sample, actual_sample)
+            self.assertEqual((yield first),     is_first)
+            self.assertEqual((yield last),  not is_first)
+            is_first = not is_first
+            yield
 
         for _ in range(10000):
             yield
