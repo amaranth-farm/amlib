@@ -602,7 +602,7 @@ class I2SLoopbackTest(GatewareTestCase):
 
         yield from send_i2s(dut.stream_in)
 
-        for expected_sample in _TEST_SAMPLES:
+        for expected_sample in _TEST_SAMPLES + [0] * 20:
             yield from self.wait_until(valid)
             actual_sample = (yield payload)
             print(f"expected: {hex(expected_sample)}, actual: {hex(actual_sample)}")
@@ -610,7 +610,4 @@ class I2SLoopbackTest(GatewareTestCase):
             self.assertEqual((yield first),     is_first)
             self.assertEqual((yield last),  not is_first)
             is_first = not is_first
-            yield
-
-        for _ in range(10000):
             yield
