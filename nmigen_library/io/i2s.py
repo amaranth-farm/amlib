@@ -381,9 +381,12 @@ class I2SReceiver(Elaboratable):
         # first marks left channel, last marks right channel
         m.d.comb += [
             connect_fifo_to_stream(rx_fifo, self.stream_out),
-            rx_fifo.w_data.eq(Cat(rx_buf, left_channel, right_channel)),
-            self.stream_out.first.eq(rx_fifo.r_data[-1]),
-            self.stream_out.last.eq(~rx_fifo.r_data[-1]),
+            rx_fifo.w_data.eq(Cat(rx_buf, left_channel)),
+            # at the time the channel flag is written into the FIFO
+            # the word clock has already flipped,
+            # so we have to flip the first/last flags here
+            self.stream_out.first.eq(~rx_fifo.r_data[-1] & self.stream_out.valid),
+            self.stream_out.last.eq(rx_fifo.r_data[-1] & self.stream_out.valid),
             rx_fifo.w_en.eq(0),
             self.fifo_level_out.eq(rx_fifo.level),
         ]
@@ -448,7 +451,8 @@ class I2SReceiver(Elaboratable):
                             with m.If(rx_cnt == 0):
                                 with m.If(right_channel):
                                     with m.If(rx_delay_cnt == 0):
-                                        m.d.comb += rx_fifo.w_en.eq(1) # write the current data word
+                                        # write the current data word
+                                        m.d.comb += rx_fifo.w_en.eq(1)
                                         m.d.sync += [
                                                 rx_cnt.eq(sample_width),
                                                 rx_delay_cnt.eq(rx_delay_val),
@@ -479,12 +483,11 @@ class I2SReceiver(Elaboratable):
                     with m.If(bit_clock_rose):
                         with m.If((rx_cnt == 0) & left_channel):
                             with m.If(rx_delay_cnt == 0):
+                                # write the current data word
+                                m.d.comb += rx_fifo.w_en.eq(1)
                                 m.d.sync += [
                                     rx_cnt      .eq(sample_width),
                                     rx_delay_cnt.eq(rx_delay_val),
-                                ]
-                                m.d.comb += [
-                                    rx_fifo.w_en.eq(1), # write the current data word
                                 ]
                                 m.next = "LEFT"
                             with m.Else():

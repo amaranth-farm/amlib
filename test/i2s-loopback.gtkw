@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
-[*] Thu Aug 26 22:48:52 2021
+[*] Thu Aug 26 23:33:57 2021
 [*]
 [dumpfile] "test_I2SLoopbackTest_test_basic.vcd"
-[dumpfile_mtime] "Thu Aug 26 22:43:15 2021"
+[dumpfile_mtime] "Thu Aug 26 23:32:01 2021"
 [dumpfile_size] 687954
 [savefile] "test/i2s-loopback.gtkw"
 [timestart] 0
 [size] 3828 2090
 [pos] -1 -1
-*-22.736841 28004000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-12.054144 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.receiver.
 [sst_width] 357
@@ -49,11 +49,13 @@ top.transmitter.payload[23:0]
 (23)top.transmitter.payload[23:0]
 @1401200
 -group_end
+@28
+top.first
 @200
 -Transmitter
 @28
 top.transmitter.underflow_out
-@23
+@22
 top.transmitter.fifo_level_out[4:0]
 @200
 -I2S
@@ -67,12 +69,49 @@ top.receiver.serial_data_in
 @200
 -Receiver
 @28
+top.receiver.bit_clock_rose
+top.receiver.rx_delay_cnt
+@24
+top.receiver.rx_cnt[4:0]
+@28
 top.receiver.fsm_state
 @22
 top.receiver.level[4:0]
-top.receiver.w_data[24:0]
 @28
 top.receiver.w_en
+@c00022
+top.receiver.w_data[24:0]
+@28
+(0)top.receiver.w_data[24:0]
+(1)top.receiver.w_data[24:0]
+(2)top.receiver.w_data[24:0]
+(3)top.receiver.w_data[24:0]
+(4)top.receiver.w_data[24:0]
+(5)top.receiver.w_data[24:0]
+(6)top.receiver.w_data[24:0]
+(7)top.receiver.w_data[24:0]
+(8)top.receiver.w_data[24:0]
+(9)top.receiver.w_data[24:0]
+(10)top.receiver.w_data[24:0]
+(11)top.receiver.w_data[24:0]
+(12)top.receiver.w_data[24:0]
+(13)top.receiver.w_data[24:0]
+(14)top.receiver.w_data[24:0]
+(15)top.receiver.w_data[24:0]
+(16)top.receiver.w_data[24:0]
+(17)top.receiver.w_data[24:0]
+(18)top.receiver.w_data[24:0]
+(19)top.receiver.w_data[24:0]
+(20)top.receiver.w_data[24:0]
+(21)top.receiver.w_data[24:0]
+(22)top.receiver.w_data[24:0]
+(23)top.receiver.w_data[24:0]
+(24)top.receiver.w_data[24:0]
+@1401200
+-group_end
+@22
+top.receiver.r_data[24:0]
+@28
 top.receiver.r_rdy
 @22
 top.receiver.r_data[24:0]
@@ -80,10 +119,13 @@ top.receiver.r_data[24:0]
 -Output
 @22
 [color] 2
+top.receiver.fifo_level_out[4:0]
+[color] 2
 top.receiver.payload[23:0]
-@28
+@29
 [color] 2
 top.receiver.valid
+@28
 [color] 2
 top.receiver.first
 [color] 2
