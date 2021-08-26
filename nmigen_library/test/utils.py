@@ -72,7 +72,7 @@ class GatewareTestCase(unittest.TestCase):
             self.sim.add_clock(1 / self.SYNC_CLOCK_FREQUENCY, domain="sync")
 
     def initialize_signals(self):
-        """ Provide an opportunity for the test apparatus to initialize siganls. """
+        """ Provide an opportunity for the test apparatus to initialize signals. """
         yield Signal()
 
     def traces_of_interest(self):
