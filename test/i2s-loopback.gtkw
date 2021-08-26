@@ -1,0 +1,92 @@
+[*]
+[*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
+[*] Thu Aug 26 22:48:52 2021
+[*]
+[dumpfile] "test_I2SLoopbackTest_test_basic.vcd"
+[dumpfile_mtime] "Thu Aug 26 22:43:15 2021"
+[dumpfile_size] 687954
+[savefile] "test/i2s-loopback.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-22.736841 28004000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.receiver.
+[sst_width] 357
+[signals_width] 315
+[sst_expanded] 1
+[sst_vpaned_height] 642
+@28
+top.clk
+top.transmitter.valid
+top.transmitter.ready
+@c00022
+top.transmitter.payload[23:0]
+@28
+(0)top.transmitter.payload[23:0]
+(1)top.transmitter.payload[23:0]
+(2)top.transmitter.payload[23:0]
+(3)top.transmitter.payload[23:0]
+(4)top.transmitter.payload[23:0]
+(5)top.transmitter.payload[23:0]
+(6)top.transmitter.payload[23:0]
+(7)top.transmitter.payload[23:0]
+(8)top.transmitter.payload[23:0]
+(9)top.transmitter.payload[23:0]
+(10)top.transmitter.payload[23:0]
+(11)top.transmitter.payload[23:0]
+(12)top.transmitter.payload[23:0]
+(13)top.transmitter.payload[23:0]
+(14)top.transmitter.payload[23:0]
+(15)top.transmitter.payload[23:0]
+(16)top.transmitter.payload[23:0]
+(17)top.transmitter.payload[23:0]
+(18)top.transmitter.payload[23:0]
+(19)top.transmitter.payload[23:0]
+(20)top.transmitter.payload[23:0]
+(21)top.transmitter.payload[23:0]
+(22)top.transmitter.payload[23:0]
+(23)top.transmitter.payload[23:0]
+@1401200
+-group_end
+@200
+-Transmitter
+@28
+top.transmitter.underflow_out
+@23
+top.transmitter.fifo_level_out[4:0]
+@200
+-I2S
+@28
+[color] 3
+top.bit_clock
+[color] 3
+top.word_clock
+[color] 3
+top.receiver.serial_data_in
+@200
+-Receiver
+@28
+top.receiver.fsm_state
+@22
+top.receiver.level[4:0]
+top.receiver.w_data[24:0]
+@28
+top.receiver.w_en
+top.receiver.r_rdy
+@22
+top.receiver.r_data[24:0]
+@200
+-Output
+@22
+[color] 2
+top.receiver.payload[23:0]
+@28
+[color] 2
+top.receiver.valid
+[color] 2
+top.receiver.first
+[color] 2
+top.receiver.last
+[pattern_trace] 1
+[pattern_trace] 0
