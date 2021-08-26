@@ -14,7 +14,7 @@ from nmigen.build    import Platform
 from nmigen.lib.cdc  import FFSynchronizer
 from nmigen.lib.fifo import SyncFIFO
 
-from ..stream import StreamInterface, connect_stream_to_fifo
+from ..stream import StreamInterface, connect_stream_to_fifo, connect_fifo_to_stream
 from ..utils  import rising_edge_detected, falling_edge_detected
 from ..test   import GatewareTestCase, sync_test_case
 
@@ -35,7 +35,7 @@ class I2STransmitter(Elaboratable):
             I2S word select signal (word clock)
         serial_clock_in: Signal(), input
             I2S bit clock
-        serial_data_out: Signal(), ouput
+        serial_data_out: Signal(), output
             transmitted I2S serial data
         underflow_out: Signal(), output
             is strobed, when the fifo was empty at the time to transmit a sample
@@ -120,7 +120,7 @@ class I2STransmitter(Elaboratable):
 
         tx_cnt_width = math.ceil(math.log(fifo_data_width,2))
         tx_cnt = Signal(tx_cnt_width)
-        tx_buf = Signal(tx_buf_width)
+        tx_shifter = Signal(tx_buf_width - 1)
         sample_msb = fifo_data_width - 1
 
         bit_clock  = Signal()
@@ -145,10 +145,11 @@ class I2STransmitter(Elaboratable):
         m.submodules.tx_fifo = tx_fifo = SyncFIFO(width=fifo_data_width + 1, depth=self._fifo_depth)
 
         # first marks left channel
-        first_flag = fifo_data_width
+        first_flag = Signal()
         m.d.comb += [
             connect_stream_to_fifo(self.stream_in, tx_fifo),
-            tx_fifo.w_data[first_flag].eq(self.stream_in.first),
+            tx_fifo.w_data[-1].eq(self.stream_in.first),
+            first_flag.eq(tx_fifo.r_data[-1]),
             tx_fifo.r_en.eq(0),
             self.fifo_level_out.eq(tx_fifo.level),
             self.underflow_out.eq(0),
@@ -166,7 +167,7 @@ class I2STransmitter(Elaboratable):
                     m.next = "LEFT_FALL"
                     m.d.sync += [
                         tx_cnt.eq(sample_width),
-                        tx_buf.eq(Cat(tx_fifo.r_data, offset))
+                        tx_shifter.eq(Cat(tx_fifo.r_data, offset))
                     ]
                     m.d.comb += tx_fifo.r_en.eq(1),
 
@@ -180,8 +181,8 @@ class I2STransmitter(Elaboratable):
                     m.next = "IDLE"
                 with m.Else():
                     m.d.sync += [
-                        self.serial_data_out.eq(tx_buf[sample_msb]),
-                        tx_buf.eq(Cat(0, tx_buf[:-1])),
+                        self.serial_data_out.eq(tx_shifter[sample_msb]),
+                        tx_shifter.eq(Cat(0, tx_shifter[:-1])),
                         tx_cnt.eq(tx_cnt - 1)
                     ]
                     m.next = "LEFT_WAIT"
@@ -210,8 +211,10 @@ class I2STransmitter(Elaboratable):
                                 with m.If(right_channel):
                                     m.d.sync += tx_cnt.eq(sample_width),
                                     with m.If(tx_fifo.r_rdy):
-                                        with m.If(tx_fifo.r_data[first_flag]):
-                                            m.d.sync += tx_buf.eq(Cat(tx_fifo.r_data, offset))
+                                        # in LEFT_WAIT state, we wait for the
+                                        # right channel to start
+                                        with m.If(~first_flag):
+                                            m.d.sync += tx_shifter.eq(Cat(tx_fifo.r_data, offset))
                                             m.d.comb += tx_fifo.r_en.eq(1)
                                         with m.Else():
                                             m.d.comb += self.mismatch_out.eq(1)
@@ -234,8 +237,8 @@ class I2STransmitter(Elaboratable):
                     m.next = "IDLE"
                 with m.Else():
                     m.d.sync += [
-                        self.serial_data_out.eq(tx_buf[sample_msb]),
-                        tx_buf.eq(Cat(0, tx_buf[:-1])),
+                        self.serial_data_out.eq(tx_shifter[sample_msb]),
+                        tx_shifter.eq(Cat(0, tx_shifter[:-1])),
                         tx_cnt.eq(tx_cnt - 1)
                     ]
                     m.next = "RIGHT_WAIT"
@@ -248,8 +251,9 @@ class I2STransmitter(Elaboratable):
                         with m.If((tx_cnt == 0) & left_channel):
                             m.d.sync += tx_cnt.eq(sample_width)
                             with m.If(tx_fifo.r_rdy):
-                                with m.If(~tx_fifo.r_data[first_flag]):
-                                    m.d.sync += tx_buf.eq(Cat(tx_fifo.r_data, offset))
+                                # in RIGHT_WAIT, we wait for the left channel to start
+                                with m.If(first_flag):
+                                    m.d.sync += tx_shifter.eq(Cat(tx_fifo.r_data, offset))
                                     m.d.comb += tx_fifo.r_en.eq(1)
                                 with m.Else():
                                     m.d.comb += self.mismatch_out.eq(1)
