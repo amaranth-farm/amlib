@@ -128,7 +128,7 @@ def connect_fifo_to_stream(fifo: FIFOInterface, stream: StreamInterface) -> None
     """
 
     return [
-        stream.valid.eq(fifo.r_rdy & fifo.r_en),
+        stream.valid.eq(fifo.r_rdy),
         fifo.r_en.eq(stream.ready),
         stream.payload.eq(fifo.r_data),
     ]
