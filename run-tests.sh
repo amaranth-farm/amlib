@@ -6,6 +6,7 @@ python3 -m unittest nmigen_library.debug.ila.IntegratedLogicAnalyzerTest
 
 python3 -m unittest nmigen_library.io.spi.SPIGatewareTestCase
 python3 -m unittest nmigen_library.io.i2s.I2STransmitterTest
+python3 -m unittest nmigen_library.io.i2s.I2SLoopbackTest
 
 python3 -m unittest nmigen_library.stream.i2c.I2CStreamTransmitterTest
 python3 -m unittest nmigen_library.stream.uart.UARTTransmitterTest
