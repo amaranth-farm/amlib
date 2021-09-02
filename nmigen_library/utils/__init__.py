@@ -14,6 +14,7 @@ from .edgetopulse     import EdgeToPulse
 from .nrziencoder     import NRZIEncoder
 from .shiftregister   import InputShiftRegister, OutputShiftRegister
 from .timer           import Timer
+from .fifo            import TransactionalizedFIFO
 
 __all__ = [
     'rising_edge_detected', 'falling_edge_detected', 'any_edge_detected',
@@ -21,7 +22,8 @@ __all__ = [
     'synchronize', 'stretch_strobe_signal',
     'OneHotMultiplexer', 'LinearFeedbackShiftRegister', 'DividingCounter',
     'NRZIEncoder', 'InputShiftRegister', 'OutputShiftRegister',
-    'Timer'
+    'Timer',
+    'TransactionalizedFIFO'
 ]
 
 def _single_edge_detector(m, signal, *, domain, edge='rising'):

@@ -21,4 +21,5 @@ python3 -m unittest nmigen_library.utils.cdc.StrobeStretcherTest
 python3 -m unittest nmigen_library.utils.dividingcounter.DividingCounterTest
 python3 -m unittest nmigen_library.utils.edgetopulse.EdgeToPulseTest
 python3 -m unittest nmigen_library.utils.timer.TimerTest
+python3 -m unittest nmigen_library.utils.fifo.TransactionalizedFIFOTest
 
