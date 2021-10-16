@@ -8,13 +8,17 @@
 
 import unittest
 
-from nmigen import Signal, Module, Cat, Elaboratable, Record
-from nmigen.hdl.ast import Rose, Fell
-from nmigen.hdl.rec import DIR_FANIN, DIR_FANOUT
+from nmigen          import Signal, Module, Cat, Elaboratable, Record, Mux
+from nmigen.build    import Platform
+from nmigen.hdl.ast  import Rose, Fell
+from nmigen.hdl.rec  import DIR_FANIN, DIR_FANOUT
 
-from ..test       import GatewareTestCase, sync_test_case
+from nmigen_library.utils import clockdivider
 
-class SPIBus(Record):
+from ..test   import GatewareTestCase, sync_test_case
+from ..utils  import SimpleClockDivider
+
+class SPIDeviceBus(Record):
     """ Record representing an SPI bus. """
 
     def __init__(self):
@@ -22,9 +26,144 @@ class SPIBus(Record):
             ('sck', 1, DIR_FANIN),
             ('sdi', 1, DIR_FANIN),
             ('sdo', 1, DIR_FANOUT),
-            ('cs',  1, DIR_FANIN)
-        ])
+            ('cs',  1, DIR_FANIN)],
+            name="spi_device")
 
+class SPIControllerBus(Record):
+    """ Record representing an SPI bus (controller side). """
+
+    def __init__(self):
+        super().__init__([
+            ('sck', 1, DIR_FANOUT),
+            ('sdi', 1, DIR_FANIN),
+            ('sdo', 1, DIR_FANOUT),
+            ('cs',  1, DIR_FANOUT)],
+            name="spi_controller")
+
+
+class SPIControllerInterface(Elaboratable):
+    """ Simple word-oriented SPI controller interface.
+
+    I/O signals:
+        B: spi            -- the SPI bus to work with
+
+        O: word_in        -- the most recent word received
+        O: word_complete  -- strobe indicating a new word is present on word_in
+        I: word_out       -- the word to be loaded; latched in on next word_complete and while cs is low
+        I: start_transfer -- strobe that initiates the SPI transfer
+    """
+
+    def __init__(self, *, word_size=8, divisor, clock_polarity=0, clock_phase=0, msb_first=True, cs_idles_high=False):
+        """
+        Parameters:
+            word_size      -- The size of each transmitted word, in bits.
+            divisor        -- the divisor of the clock divider providing the SPI clock
+            clock_polarity -- The SPI-standard clock polarity. 0 for idle low, 1 for idle high.
+            clock_phase    -- The SPI-standard clock phase. 1 to capture on the leading edge, or 0 for on the trailing
+            msb_first      -- If true, or not provided, data will be transmitted MSB first (standard).
+            cs_idles_high  -- If provided, data will be captured when CS goes _low_, rather than high.
+        """
+
+        self.word_size      = word_size
+        self.divisor        = divisor
+        self.clock_polarity = clock_polarity
+        self.clock_phase    = clock_phase
+        self.msb_first      = msb_first
+        self.cs_idles_high  = cs_idles_high
+
+        #
+        # I/O port.
+        #
+
+        # SPI
+        self.spi = SPIControllerBus()
+
+        # Data I/O
+        self.word_in           = Signal(self.word_size)
+        self.word_out          = Signal(self.word_size)
+        self.word_accepted     = Signal()
+        self.word_complete     = Signal()
+        self.start_transfer    = Signal()
+
+    def elaborate(self, platform: Platform) -> Module:
+        m = Module()
+
+        m.submodules.sck_divider = sck_divider = SimpleClockDivider(self.divisor)
+        m.submodules.spi_device  = spi_device  = \
+            SPIDeviceInterface(word_size=self.word_size,
+                               clock_polarity=self.clock_polarity,
+                               clock_phase=self.clock_phase,
+                               msb_first=self.msb_first,
+                               cs_idles_high=self.cs_idles_high)
+
+        sck = Signal()
+
+        cs_active   = 0   if self.cs_idles_high else 1
+        cs_inactive = 1   if self.cs_idles_high else 0
+        cs  = Signal(reset=cs_inactive)
+
+        # wiring
+        m.d.comb += [
+            self.spi.sck.eq(sck),
+            self.spi.cs.eq(cs),
+            self.spi.sdo.eq(spi_device.spi.sdo),
+
+            spi_device.spi.sdi.eq(self.spi.sdi),
+            spi_device.spi.sck.eq(sck),
+            spi_device.spi.cs.eq(cs),
+
+            self.word_in.eq(spi_device.word_in),
+            spi_device.word_out.eq(self.word_out),
+            self.word_accepted.eq(spi_device.word_accepted),
+            self.word_complete.eq(spi_device.word_complete),
+        ]
+
+        clock_edge = Rose(sck_divider.clock_out, clocks=self.divisor//8, domain="sync") if not self.clock_polarity else \
+                     Fell(sck_divider.clock_out, clocks=self.divisor//8, domain="sync")
+
+        with m.FSM() as fsm:
+            m.d.comb += sck.eq(Mux(fsm.ongoing("TRANSFER"), sck_divider.clock_out, self.clock_polarity))
+
+            with m.State("IDLE"):
+                m.d.sync += sck_divider.clock_enable_in.eq(0)
+                with m.If(self.start_transfer):
+                    m.d.sync += sck_divider.clock_enable_in.eq(1),
+                    m.next = "WAIT_EDGE"
+
+            with m.State("WAIT_EDGE"):
+                with m.If(clock_edge):
+                    m.next = "TRANSFER"
+
+            with m.State("TRANSFER"):
+                m.d.sync += cs.eq(cs_active)
+                with m.If(spi_device.word_complete):
+                    m.d.sync += [
+                        cs.eq(cs_inactive),
+                    ]
+                    m.next = "IDLE"
+
+        return m
+
+
+class SPIControllerInterfaceTest(GatewareTestCase):
+    FRAGMENT_UNDER_TEST = SPIControllerInterface
+    FRAGMENT_ARGUMENTS = dict(word_size=16, divisor=12, clock_phase=0, clock_polarity=0, cs_idles_high=True)
+
+    def loopback(self, no_cycles):
+        for _ in range(no_cycles):
+            yield self.dut.spi.sdi.eq((yield self.dut.spi.sdo))
+            yield
+
+    @sync_test_case
+    def test_spi_interface(self):
+        dut = self.dut
+        yield
+        test_value = 0xABCD
+        yield dut.word_out.eq(test_value)
+        yield
+        yield from self.pulse(dut.start_transfer)
+        yield from self.loopback(220)
+        self.assertEqual(test_value, (yield dut.word_in))
 
 class SPIDeviceInterface(Elaboratable):
     """ Simple word-oriented SPI interface.
@@ -58,7 +197,7 @@ class SPIDeviceInterface(Elaboratable):
         #
 
         # SPI
-        self.spi = SPIBus()
+        self.spi = SPIDeviceBus()
 
         # Data I/O
         self.word_in        = Signal(self.word_size)
@@ -95,7 +234,7 @@ class SPIDeviceInterface(Elaboratable):
         return sample_edge, output_edge
 
 
-    def elaborate(self, platform):
+    def elaborate(self, platform: Platform) -> Module:
         m = Module()
 
         # Grab signals that detect when we should shift in and out.
@@ -315,7 +454,7 @@ class SPICommandInterface(Elaboratable):
         #
 
         # SPI
-        self.spi = SPIBus()
+        self.spi = SPIDeviceBus()
 
         # Command I/O.
         self.command        = Signal(self.command_size)
@@ -331,7 +470,7 @@ class SPICommandInterface(Elaboratable):
         self.stalled = Signal()
 
 
-    def elaborate(self, platform):
+    def elaborate(self, platform: Platform) -> Module:
 
         m = Module()
         spi = self.spi
@@ -494,7 +633,7 @@ class SPIRegisterInterface(Elaboratable):
         self.stalled = Signal()
 
         # Create our SPI I/O.
-        self.spi = SPIBus()
+        self.spi = SPIDeviceBus()
 
         #
         # Internal details.
@@ -680,7 +819,7 @@ class SPIRegisterInterface(Elaboratable):
         ]
 
 
-    def elaborate(self, platform):
+    def elaborate(self, platform: Platform) -> Module:
         m = Module()
 
         # Attach our SPI interface.
@@ -796,10 +935,10 @@ class SPIMultiplexer(Elaboratable):
         #
         # I/O port
         #
-        self.shared_lines = SPIBus()
+        self.shared_lines = SPIDeviceBus()
 
 
-    def elaborate(self, platform):
+    def elaborate(self, platform: Platform) -> Module:
         m = Module()
 
         # Build our multiplexing logic.

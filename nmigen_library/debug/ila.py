@@ -26,7 +26,7 @@ from vcd.gtkw        import GTKWSave
 
 from ..stream         import StreamInterface
 from ..stream.uart    import UARTMultibyteTransmitter
-from ..io.spi         import SPIDeviceInterface, SPIBus, SPIGatewareTestCase
+from ..io.spi         import SPIDeviceInterface, SPIDeviceBus, SPIGatewareTestCase
 from ..test.utils     import GatewareTestCase, sync_test_case
 
 
@@ -331,7 +331,7 @@ class SyncSerialILA(Elaboratable):
         #
         # I/O port
         #
-        self.spi = SPIBus()
+        self.spi = SPIDeviceBus()
 
         #
         # Init

@@ -1,0 +1,31 @@
+[*]
+[*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
+[*] Sat Oct 16 06:34:36 2021
+[*]
+[dumpfile] "/devel/HDL/src/nmigen-library/test_SPIControllerInterfaceTest_test_spi_interface.vcd"
+[dumpfile_mtime] "Sat Oct 16 06:34:31 2021"
+[dumpfile_size] 9300
+[savefile] "/devel/HDL/src/nmigen-library/test/spi-controller.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-18.000000 114600 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 357
+[signals_width] 315
+[sst_expanded] 1
+[sst_vpaned_height] 658
+@28
+top.clk
+top.fsm_state
+top.spi_controller__cs
+top.spi_controller__sck
+top.spi_controller__sdi
+top.spi_controller__sdo
+top.start_transfer
+top.word_accepted
+@22
+top.word_out[15:0]
+top.word_in[15:0]
+[pattern_trace] 1
+[pattern_trace] 0
