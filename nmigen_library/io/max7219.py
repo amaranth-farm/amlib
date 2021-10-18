@@ -7,6 +7,7 @@ from nmigen.compat.fhdl.structure import Repl
 
 from .spi     import SPIControllerBus, SPIControllerInterface
 from ..test   import GatewareTestCase, sync_test_case
+from ..utils  import Timer
 
 seven_segment_hex = [
     0b1111110, # 0
@@ -35,11 +36,12 @@ class Register(IntEnum):
     DISPLAY_TEST   = 0x0f
 
 class SerialLEDArray(Elaboratable):
-    def __init__(self, *, divisor, no_modules=1):
+    def __init__(self, *, divisor, init_delay=16e6, no_modules=1):
         # parameters
         assert divisor % 2 == 0, "divisor must be even"
         self.divisor       = divisor
         self.no_modules    = no_modules
+        self.init_delay    = init_delay
 
         # I/O
         self.spi_bus_out  = SPIControllerBus()
@@ -54,12 +56,18 @@ class SerialLEDArray(Elaboratable):
 
         current_digits = Array(Signal(8, name=f"current_digit{n}") for n in range(8 * self.no_modules))
 
+        m.submodules.init_delay = init_delay = \
+            Timer(width=24, load=int(self.init_delay), reload=0, allow_restart=False)
+
         m.submodules.spi_controller = spi_controller = SPIControllerInterface(word_size=16 * self.no_modules, divisor=self.divisor, cs_idles_high=True)
 
         with m.If(self.valid_in):
             m.d.sync += Cat(current_digits).eq(Cat(self.digits_in))
 
-        m.d.comb += spi_controller.spi.connect(self.spi_bus_out)
+        m.d.comb += [
+            spi_controller.spi.connect(self.spi_bus_out),
+            init_delay.start.eq(1),
+        ]
 
         digit_counter = Signal(8)
         next_digit    = Signal()
@@ -74,6 +82,9 @@ class SerialLEDArray(Elaboratable):
             m.d.sync += step_counter.eq(step_counter + 1)
 
         with m.FSM(name="max7219"):
+            with m.State("WAIT"):
+                with m.If(init_delay.done):
+                    m.next = "INIT"
             with m.State("INIT"):
                 with m.Switch(step_counter):
                     with m.Case(0):
@@ -159,7 +170,7 @@ class SerialLEDArray(Elaboratable):
 
 class SerialLEDArrayTest(GatewareTestCase):
     FRAGMENT_UNDER_TEST = SerialLEDArray
-    FRAGMENT_ARGUMENTS = dict(divisor=10, no_modules=2)
+    FRAGMENT_ARGUMENTS = dict(divisor=10, init_delay=20, no_modules=2)
 
     def loopback(self, no_cycles):
         for _ in range(no_cycles):

@@ -85,6 +85,14 @@ class SPIControllerInterface(Elaboratable):
         self.word_complete     = Signal()
         self.start_transfer    = Signal()
 
+    def connect_to_resource(self, spi_resource):
+        return [
+            spi_resource.copi .eq(self.spi_bus_out.sdo),
+            spi_resource.cipo .eq(self.spi_bus_out.sdi),
+            spi_resource.clk  .eq(self.spi_bus_out.sck),
+            spi_resource.cs   .eq(self.spi_bus_out.cs if not self.cs_idles_high else ~self.spi_bus_out.cs),
+        ]
+
     def elaborate(self, platform: Platform) -> Module:
         m = Module()
 
@@ -136,10 +144,9 @@ class SPIControllerInterface(Elaboratable):
 
             with m.State("TRANSFER"):
                 m.d.sync += cs.eq(cs_active)
+
                 with m.If(spi_device.word_complete):
-                    m.d.sync += [
-                        cs.eq(cs_inactive),
-                    ]
+                    m.d.sync += cs.eq(cs_inactive)
                     m.next = "IDLE"
 
         return m
