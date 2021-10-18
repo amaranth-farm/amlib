@@ -1,5 +1,4 @@
 from enum import IntEnum
-from sys import modules
 
 from nmigen import *
 from nmigen.build import Platform
@@ -9,23 +8,22 @@ from .spi     import SPIControllerBus, SPIControllerInterface
 from ..test   import GatewareTestCase, sync_test_case
 from ..utils  import Timer
 
-seven_segment_hex = [
-    0b1111110, # 0
-    0b0110000, # 1
-    0b1101101, # 2
-    0b1111001, # 3
-    0b0110011, # 4
-    0b1011011, # 5
-    0b1011111, # 6
-    0b1110000, # 7
-    0b1111111, # 8
-    0b1110011, # 9
-    0b1110111, # A
-    0b0011111, # b
-    0b1001110, # C
-    0b0111101, # d
-    0b1001111, # E
-    0b1000111, # F
+seven_segment_font = [
+  ['A', 0b1110111], ['B', 0b1111111], ['C', 0b1001110], ['D', 0b1111110], ['E', 0b1001111], ['F',  0b1000111],
+  ['G', 0b1011110], ['H', 0b0110111], ['I', 0b0110000], ['J', 0b0111100], ['L', 0b0001110], ['N',  0b1110110],
+  ['O', 0b1111110], ['P', 0b1100111], ['R', 0b0000101], ['S', 0b1011011], ['T', 0b0001111], ['U',  0b0111110],
+  ['Y', 0b0100111], ['[', 0b1001110], [']', 0b1111000], ['_', 0b0001000], ['a', 0b1110111], ['b',  0b0011111],
+  ['c', 0b0001101], ['d', 0b0111101], ['e', 0b1001111], ['f', 0b1000111], ['g', 0b1011110], ['h',  0b0010111],
+  ['i', 0b0010000], ['j', 0b0111100], ['l', 0b0001110], ['n', 0b0010101], ['o', 0b1111110], ['p',  0b1100111],
+  ['r', 0b0000101], ['s', 0b1011011], ['t', 0b0001111], ['u', 0b0011100], ['y', 0b0100111], ['-',  0b0000001],
+  [' ', 0b0000000], ['0', 0b1111110], ['1', 0b0110000], ['2', 0b1101101], ['3', 0b1111001], ['4',  0b0110011],
+  ['5', 0b1011011], ['6', 0b1011111], ['7', 0b1110000], ['8', 0b1111111], ['9', 0b1111011], ['/0', 0b0000000],
+]
+
+seven_segment_hex_numbers = [
+  ['0', 0b1111110], ['1', 0b0110000], ['2', 0b1101101], ['3', 0b1111001], ['4', 0b0110011],
+  ['5', 0b1011011], ['6', 0b1011111], ['7', 0b1110000], ['8', 0b1111111], ['9', 0b1111011],
+  ['A', 0b1110111], ['b', 0b0011111], ['C', 0b1001110], ['D', 0b1111110], ['E', 0b1001111], ['F', 0b1000111],
 ]
 
 class MAX7219Register(IntEnum):
@@ -101,6 +99,7 @@ class SerialLEDArray(Elaboratable):
             with m.State("WAIT"):
                 with m.If(init_delay.done):
                     m.next = "INIT"
+
             with m.State("INIT"):
                 with m.Switch(step_counter):
                     with m.Case(0):
@@ -188,14 +187,44 @@ class SerialLEDArrayTest(GatewareTestCase):
         yield from self.loopback(7200)
 
 
-"""
-TODO: decode seven segment
-            if self.seven_segment != None:
-                for module in range(self.no_modules):
-                    with m.Switch(self.digits_in):
-                        for digit in range(8):
-                            index = module * 8 + digit
-                            with m.Case(digit):
-                                m.d.sync += current_digits[index].eq(self.digits_in[index])
+class NibbleToSevenSegmentHex(Elaboratable):
+    def __init__(self):
+        self.nibble_in         = Signal(4)
+        self.seven_segment_out = Signal(8)
 
-"""
+    def elaborate(self, platform: Platform) -> Module:
+        m = Module()
+
+        with m.Switch(self.nibble_in):
+            for digit in seven_segment_hex_numbers:
+                with m.Case(int(f"0x{digit[0]}", 0)):
+                    m.d.comb += self.seven_segment_out.eq(digit[1])
+
+        return m
+
+class NumberToSevenSegmentHex(Elaboratable):
+    def __init__(self, width=32, register = False):
+        # parameters
+        assert width % 4 == 0, "width must be a multiple of four"
+        self.width    = width
+        self.register = register
+
+        # I/O
+        self.number_in         = Signal(width)
+        self.seven_segment_out = Signal(width * 2)
+
+    def elaborate(self, platform: Platform) -> Module:
+        m = Module()
+
+        no_nibbles = self.width // 4
+
+        for i in range(no_nibbles):
+            digit_to_hex = NibbleToSevenSegmentHex()
+            m.submodules += digit_to_hex
+            domain = m.d.sync if self.register else m.d.comb
+            domain += [
+                digit_to_hex.nibble_in.eq(self.number_in[(i * 4):(i * 4 + 4)]),
+                self.seven_segment_out[(i * 8):(i * 8 + 8)].eq(digit_to_hex.seven_segment_out),
+            ]
+
+        return m
