@@ -49,7 +49,7 @@ class SerialLEDArray(Elaboratable):
         self.valid_in     = Signal()
 
     def send_command_to_all_modules(self, spi_controller, command_byte, data_byte):
-        return spi_controller.word_out.eq(Repl(Cat(Const(command_byte, 8), Const(data_byte, 8)), self.no_modules))
+        return spi_controller.word_out.eq(Repl(Cat(Const(data_byte, 8), Const(command_byte, 8)), self.no_modules))
 
     def connect_to_resource(self, spi_resource):
         return [
