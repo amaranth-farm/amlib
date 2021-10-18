@@ -212,6 +212,13 @@ class SPIDeviceInterface(Elaboratable):
         self.word_accepted  = Signal()
         self.word_complete  = Signal()
 
+    def connect_to_resource(self, spi_resource):
+        return [
+            spi_resource.copi .eq(self.spi_bus_out.sdo),
+            spi_resource.cipo .eq(self.spi_bus_out.sdi),
+            spi_resource.clk  .eq(self.spi_bus_out.sck),
+            spi_resource.cs   .eq(self.spi_bus_out.cs if not self.cs_idles_high else ~self.spi_bus_out.cs),
+        ]
 
     def spi_edge_detectors(self, m):
         """ Generates edge detectors for the sample and output clocks, based on the current SPI mode.
@@ -476,6 +483,13 @@ class SPICommandInterface(Elaboratable):
         self.idle    = Signal()
         self.stalled = Signal()
 
+    def connect_to_resource(self, spi_resource):
+        return [
+            spi_resource.copi .eq(self.spi_bus_out.sdo),
+            spi_resource.cipo .eq(self.spi_bus_out.sdi),
+            spi_resource.clk  .eq(self.spi_bus_out.sck),
+            spi_resource.cs   .eq(self.spi_bus_out.cs),
+        ]
 
     def elaborate(self, platform: Platform) -> Module:
 
@@ -825,6 +839,13 @@ class SPIRegisterInterface(Elaboratable):
             self.stalled        .eq(self.interface.stalled)
         ]
 
+    def connect_to_resource(self, spi_resource):
+        return [
+            spi_resource.copi .eq(self.spi_bus_out.sdo),
+            spi_resource.cipo .eq(self.spi_bus_out.sdi),
+            spi_resource.clk  .eq(self.spi_bus_out.sck),
+            spi_resource.cs   .eq(self.spi_bus_out.cs),
+        ]
 
     def elaborate(self, platform: Platform) -> Module:
         m = Module()

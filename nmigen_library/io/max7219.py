@@ -51,6 +51,13 @@ class SerialLEDArray(Elaboratable):
     def send_command_to_all_modules(self, spi_controller, command_byte, data_byte):
         return spi_controller.word_out.eq(Repl(Cat(Const(command_byte, 8), Const(data_byte, 8)), self.no_modules))
 
+    def connect_to_resource(self, spi_resource):
+        return [
+            spi_resource.copi .eq(self.spi_bus_out.sdo),
+            spi_resource.clk  .eq(self.spi_bus_out.sck),
+            spi_resource.cs   .eq(~self.spi_bus_out.cs),
+        ]
+
     def elaborate(self, platform: Platform) -> Module:
         m = Module()
 
