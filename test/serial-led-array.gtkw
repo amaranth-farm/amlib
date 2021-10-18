@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Mon Oct 18 20:26:46 2021
+[*] Mon Oct 18 20:41:51 2021
 [*]
 [dumpfile] "/devel/HDL/src/nmigen-library/test_SerialLEDArrayTest_test_spi_interface.vcd"
-[dumpfile_mtime] "Mon Oct 18 20:26:33 2021"
-[dumpfile_size] 338891
+[dumpfile_mtime] "Mon Oct 18 20:41:30 2021"
+[dumpfile_size] 338477
 [savefile] "/devel/HDL/src/nmigen-library/test/serial-led-array.gtkw"
 [timestart] 0
 [size] 3828 2090
 [pos] -1 -1
-*-19.863543 13190300 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-21.863543 13190300 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [treeopen] top.spi_controller.
 [sst_width] 505

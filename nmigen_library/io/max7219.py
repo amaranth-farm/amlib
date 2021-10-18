@@ -28,20 +28,29 @@ seven_segment_hex = [
     0b1000111, # F
 ]
 
-class Register(IntEnum):
+class MAX7219Register(IntEnum):
     DECODE         = 0x09
     INTENSITY      = 0x0a
     SCAN_LIMIT     = 0x0b
     SHUTDOWN       = 0x0c
     DISPLAY_TEST   = 0x0f
 
+default_init_sequence = [
+    [MAX7219Register.DISPLAY_TEST,   0],
+    [MAX7219Register.DECODE,         0],
+    [MAX7219Register.INTENSITY,    0xf],
+    [MAX7219Register.SCAN_LIMIT,     7],
+    [MAX7219Register.SHUTDOWN,       1],
+]
+
 class SerialLEDArray(Elaboratable):
-    def __init__(self, *, divisor, init_delay=16e6, no_modules=1):
+    def __init__(self, *, divisor, init_delay=16e6, init_sequence=default_init_sequence, no_modules=1):
         # parameters
         assert divisor % 2 == 0, "divisor must be even"
         self.divisor       = divisor
         self.no_modules    = no_modules
         self.init_delay    = init_delay
+        self.init_sequence = init_sequence
 
         # I/O
         self.spi_bus_out  = SPIControllerBus()
@@ -95,7 +104,8 @@ class SerialLEDArray(Elaboratable):
             with m.State("INIT"):
                 with m.Switch(step_counter):
                     with m.Case(0):
-                        m.d.sync += self.send_command_to_all_modules(spi_controller, Register.SCAN_LIMIT, 7)
+                        item = self.init_sequence[0]
+                        m.d.sync += self.send_command_to_all_modules(spi_controller, item[0], item[1]),
                         m.d.comb += next_step.eq(1)
                     with m.Case(1):
                         m.d.comb += [
@@ -103,46 +113,20 @@ class SerialLEDArray(Elaboratable):
                             next_step.eq(1)
                         ]
 
-                    with m.Case(2):
-                        with m.If(spi_controller.word_complete):
-                            m.d.sync += self.send_command_to_all_modules(spi_controller, Register.DECODE, 0),
-                            m.d.comb += next_step.eq(1)
-                    with m.Case(3):
-                        m.d.comb += [
-                            spi_controller.start_transfer.eq(1),
-                            next_step.eq(1)
-                        ]
+                    i = 1
+                    for item in self.init_sequence[1:]:
+                        with m.Case(2 * i):
+                            with m.If(spi_controller.word_complete):
+                                m.d.sync += self.send_command_to_all_modules(spi_controller, item[0], item[1]),
+                                m.d.comb += next_step.eq(1)
+                        with m.Case(2 * i + 1):
+                            m.d.comb += [
+                                spi_controller.start_transfer.eq(1),
+                                next_step.eq(1)
+                            ]
+                        i += 1
 
-                    with m.Case(4):
-                        with m.If(spi_controller.word_complete):
-                            m.d.sync += self.send_command_to_all_modules(spi_controller, Register.SHUTDOWN, 1),
-                            m.d.comb += next_step.eq(1)
-                    with m.Case(5):
-                        m.d.comb += [
-                            spi_controller.start_transfer.eq(1),
-                            next_step.eq(1)
-                        ]
-
-                    with m.Case(6):
-                        with m.If(spi_controller.word_complete):
-                            m.d.sync += self.send_command_to_all_modules(spi_controller, Register.DISPLAY_TEST, 0),
-                            m.d.comb += next_step.eq(1)
-                    with m.Case(7):
-                        m.d.comb += [
-                            spi_controller.start_transfer.eq(1),
-                            next_step.eq(1)
-                        ]
-
-                    with m.Case(8):
-                        with m.If(spi_controller.word_complete):
-                            m.d.sync += self.send_command_to_all_modules(spi_controller, Register.INTENSITY, 0xf),
-                            m.d.comb += next_step.eq(1)
-                    with m.Case(9):
-                        m.d.comb += [
-                            spi_controller.start_transfer.eq(1),
-                            next_step.eq(1)
-                        ]
-                    with m.Case(10):
+                    with m.Case(2 * i):
                         with m.If(spi_controller.word_complete):
                             m.d.comb += next_step.eq(1)
 
