@@ -133,15 +133,19 @@ class SerialLEDArray(Elaboratable):
                             next_step.eq(1)
                         ]
 
-                    with m.Case(6):
+                    with m.Case(8):
                         with m.If(spi_controller.word_complete):
                             m.d.sync += self.send_command_to_all_modules(spi_controller, Register.INTENSITY, 0xf),
                             m.d.comb += next_step.eq(1)
-                    with m.Case(7):
+                    with m.Case(9):
                         m.d.comb += [
                             spi_controller.start_transfer.eq(1),
                             next_step.eq(1)
                         ]
+                    with m.Case(10):
+                        with m.If(spi_controller.word_complete):
+                            m.d.comb += next_step.eq(1)
+
                     with m.Default():
                         m.d.sync += step_counter.eq(0)
                         m.next = "SHOWTIME"
