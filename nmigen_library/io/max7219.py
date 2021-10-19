@@ -211,6 +211,7 @@ class NumberToSevenSegmentHex(Elaboratable):
 
         # I/O
         self.number_in         = Signal(width)
+        self.dots_in           = Signal(width // 4)
         self.seven_segment_out = Signal(width * 2)
 
     def elaborate(self, platform: Platform) -> Module:
@@ -224,7 +225,8 @@ class NumberToSevenSegmentHex(Elaboratable):
             domain = m.d.sync if self.register else m.d.comb
             domain += [
                 digit_to_hex.nibble_in.eq(self.number_in[(i * 4):(i * 4 + 4)]),
-                self.seven_segment_out[(i * 8):(i * 8 + 8)].eq(digit_to_hex.seven_segment_out),
+                self.seven_segment_out[(i * 8):(i * 8 + 7)].eq(digit_to_hex.seven_segment_out),
+                self.seven_segment_out[(i * 8) + 7].eq(self.dots_in[i])
             ]
 
         return m
