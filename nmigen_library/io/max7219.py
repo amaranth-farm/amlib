@@ -141,9 +141,7 @@ class SerialLEDArray(Elaboratable):
                                 spi_controller.word_out[(0 + module * 16):(8  + module * 16)].eq(current_digits[Const(module * 8, 8) + digit_counter]),
                                 spi_controller.word_out[(8 + module * 16):(16 + module * 16)].eq((digit_counter + 1)[0:8]),
                             ]
-                            m.d.comb += [
-                                next_step.eq(1),
-                            ]
+                            m.d.comb += next_step.eq(1)
 
                     with m.Case(1):
                         m.d.comb += [
