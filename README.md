@@ -12,6 +12,7 @@ This library contains:
   * I2S (currently transmit only)
   * SPI
   * MAX7219 SPI LED array driver core
+  * neopixel (WS2812) RGB led strip driver core
 
 **nmigen_library.soc**
 : Building blocks for SOC creation:
