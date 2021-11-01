@@ -70,6 +70,7 @@ class WS2812(Elaboratable):
                             led_counter.eq(led_counter + 1),
                         ]
                         m.next = "TRANSMIT"
+
                     with m.Else():
                         m.d.comb += self.done_out.eq(1)
                         m.d.sync += led_counter.eq(0)
@@ -77,6 +78,7 @@ class WS2812(Elaboratable):
 
             with m.State("TRANSMIT"):
                 m.d.sync += cycle_counter.eq(cycle_counter + 1)
+
                 with m.If(cycle_counter < current_cycle_length):
                     m.d.comb += self.data_out.eq(1)
                 with m.Else():
@@ -84,7 +86,9 @@ class WS2812(Elaboratable):
 
                 with m.If(cycle_counter >= Const(self.full_cycle_length)):
                     m.d.sync += cycle_counter.eq(0)
-                    with m.If(bit_counter < 23):
+
+                    last_bit = 23
+                    with m.If(bit_counter < last_bit):
                         m.d.sync += [
                             grb.eq(grb << 1),
                             bit_counter.eq(bit_counter + 1),
@@ -97,9 +101,7 @@ class WS2812(Elaboratable):
 
                         # transmit each LED's data
                         with m.If(led_counter < self.num_leds):
-                            m.d.sync += [
-                                grb.eq(Cat(self.blue_in[led_counter], self.red_in[led_counter], self.green_in[led_counter])),
-                            ]
+                            m.d.sync += grb.eq(Cat(self.blue_in[led_counter], self.red_in[led_counter], self.green_in[led_counter])),
 
                         # if all LEDS' data has been transmitted, send another reset
                         with m.Else():
