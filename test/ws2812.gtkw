@@ -1,0 +1,57 @@
+[*]
+[*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
+[*] Mon Nov  1 05:57:45 2021
+[*]
+[dumpfile] "test_WS2812Test_test_spi_interface.vcd"
+[dumpfile_mtime] "Mon Nov  1 05:55:08 2021"
+[dumpfile_size] 28634
+[savefile] "test/ws2812.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-19.000000 1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 463
+[signals_width] 405
+[sst_expanded] 1
+[sst_vpaned_height] 658
+@28
+top.clk
+@200
+-Inputs
+@22
+top.red_0[7:0]
+top.green_0[7:0]
+top.blue_1[7:0]
+top.red_1[7:0]
+top.green_1[7:0]
+top.blue_1[7:0]
+top.red_2[7:0]
+top.green_2[7:0]
+top.blue_2[7:0]
+@28
+top.start_in
+@200
+-FSM
+@28
+top.fsm_state
+@22
+top.grb[23:0]
+@24
+top.led_counter[2:0]
+top.bit_counter[4:0]
+@28
+top.current_bit
+@23
+top.current_cycle_length[4:0]
+@22
+top.cycle_counter[4:0]
+@200
+-Output
+@28
+[color] 2
+top.data_out
+[color] 2
+top.done_out
+[pattern_trace] 1
+[pattern_trace] 0
