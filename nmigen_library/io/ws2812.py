@@ -1,3 +1,7 @@
+# Copyright (C) 2021 Hans Baier hansfbaier@gmail.com
+#
+# SPDX-License-Identifier: Apache-2.0
+#
 from math import log2
 
 from nmigen import *
