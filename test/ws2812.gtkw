@@ -1,35 +1,30 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Mon Nov  1 05:57:45 2021
+[*] Wed Nov  3 23:03:55 2021
 [*]
 [dumpfile] "test_WS2812Test_test_spi_interface.vcd"
-[dumpfile_mtime] "Mon Nov  1 05:55:08 2021"
-[dumpfile_size] 28634
+[dumpfile_mtime] "Wed Nov  3 23:02:26 2021"
+[dumpfile_size] 30476
 [savefile] "test/ws2812.gtkw"
 [timestart] 0
 [size] 3828 2090
 [pos] -1 -1
-*-19.000000 1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-19.000000 2914900 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [sst_width] 463
 [signals_width] 405
 [sst_expanded] 1
-[sst_vpaned_height] 658
-@28
-top.clk
+[sst_vpaned_height] 650
 @200
 -Inputs
 @22
-top.red_0[7:0]
-top.green_0[7:0]
-top.blue_1[7:0]
-top.red_1[7:0]
-top.green_1[7:0]
-top.blue_1[7:0]
-top.red_2[7:0]
-top.green_2[7:0]
-top.blue_2[7:0]
+top.red_in[7:0]
+top.green_in[7:0]
+top.blue_in[7:0]
+@23
+top.led_address_in[1:0]
 @28
+top.write_enable_in
 top.start_in
 @200
 -FSM
@@ -42,9 +37,8 @@ top.led_counter[2:0]
 top.bit_counter[4:0]
 @28
 top.current_bit
-@23
-top.current_cycle_length[4:0]
 @22
+top.current_cycle_length[4:0]
 top.cycle_counter[4:0]
 @200
 -Output

@@ -17,18 +17,23 @@ Data is transmitted using a 800kHz signal.
 A '1' is 50% duty cycle, a '0' is 20% duty cycle.
 """
 class WS2812(Elaboratable):
-    def __init__(self, *, sys_clock_freq, num_leds):
+    def __init__(self, *, sys_clock_freq, no_leds):
         # parameters
-        self.num_leds          = num_leds
+        self.no_leds           = no_leds
         self.full_cycle_length = sys_clock_freq // 800e3
         self.low_cycle_length  = int(0.32 * self.full_cycle_length)
         self.high_cycle_length = int(0.64 * self.full_cycle_length)
         print(f"full cycle: {self.full_cycle_length}")
 
+        self.mem = Memory(width=24, depth=no_leds, name="led_memory")
+
         # I / O
-        self.red_in   = Array(Signal(8, name=f"red_{n}")   for n in range(num_leds))
-        self.green_in = Array(Signal(8, name=f"green_{n}") for n in range(num_leds))
-        self.blue_in  = Array(Signal(8, name=f"blue_{n}")  for n in range(num_leds))
+        self.red_in          = Signal(8)
+        self.green_in        = Signal(8)
+        self.blue_in         = Signal(8)
+        self.led_address_in  = Signal(range(no_leds))
+        self.write_enable_in = Signal()
+
         self.data_out = Signal()
 
         self.start_in  = Signal()
@@ -37,9 +42,12 @@ class WS2812(Elaboratable):
     def elaborate(self, platform: Platform) -> Module:
         m = Module()
 
+        m.submodules.read_port  = mem_read_port  = self.mem.read_port()
+        m.submodules.write_port = mem_write_port = self.mem.write_port()
+
         grb = Signal(3 * 8)
 
-        led_counter = Signal(bits_for(self.num_leds) + 1)
+        led_counter = Signal(bits_for(self.no_leds) + 1)
         bit_counter = Signal(5)
         current_bit = Signal()
 
@@ -53,6 +61,10 @@ class WS2812(Elaboratable):
             self.data_out.eq(1),
             current_bit.eq(grb[23]),
             current_cycle_length.eq(Mux(current_bit, self.high_cycle_length, self.low_cycle_length)),
+            mem_write_port.addr.eq(self.led_address_in),
+            mem_write_port.data.eq(Cat(self.blue_in, self.red_in, self.green_in)),
+            mem_write_port.en.eq(self.write_enable_in),
+            mem_read_port.addr.eq(led_counter),
         ]
 
         with m.FSM():
@@ -70,7 +82,7 @@ class WS2812(Elaboratable):
 
                     with m.If(led_counter == 0):
                         m.d.sync += [
-                            grb.eq(Cat(self.blue_in[led_counter], self.red_in[led_counter], self.green_in[led_counter])),
+                            grb.eq(mem_read_port.data),
                             led_counter.eq(led_counter + 1),
                         ]
                         m.next = "TRANSMIT"
@@ -104,8 +116,8 @@ class WS2812(Elaboratable):
                         ]
 
                         # transmit each LED's data
-                        with m.If(led_counter < self.num_leds):
-                            m.d.sync += grb.eq(Cat(self.blue_in[led_counter], self.red_in[led_counter], self.green_in[led_counter])),
+                        with m.If(led_counter < self.no_leds):
+                            m.d.sync += grb.eq(mem_read_port.data),
 
                         # if all LEDS' data has been transmitted, send another reset
                         with m.Else():
@@ -115,7 +127,15 @@ class WS2812(Elaboratable):
 
 class WS2812Test(GatewareTestCase):
     FRAGMENT_UNDER_TEST = WS2812
-    FRAGMENT_ARGUMENTS = dict(sys_clock_freq=8e6, num_leds=3)
+    FRAGMENT_ARGUMENTS = dict(sys_clock_freq=8e6, no_leds=3)
+
+    def write_led_color(self, dut, led_no, red, green, blue):
+        yield dut.red_in   .eq(red)
+        yield dut.green_in .eq(green)
+        yield dut.blue_in  .eq(blue)
+        yield dut.led_address_in.eq(led_no)
+        yield from self.pulse(dut.write_enable_in)
+        yield
 
     @sync_test_case
     def test_spi_interface(self):
@@ -123,17 +143,9 @@ class WS2812Test(GatewareTestCase):
         yield
         yield
         yield
-        yield dut.red_in[0]   .eq(0xff)
-        yield dut.green_in[0] .eq(0x0)
-        yield dut.blue_in[0]  .eq(0x0)
-
-        yield dut.red_in[1]   .eq(0x0)
-        yield dut.green_in[1] .eq(0xff)
-        yield dut.blue_in[1]  .eq(0x0)
-
-        yield dut.red_in[2]   .eq(0x0)
-        yield dut.green_in[2] .eq(0x0)
-        yield dut.blue_in[2]  .eq(0xff)
+        yield from self.write_led_color(dut, 0, 0xff, 0,    0)
+        yield from self.write_led_color(dut, 1, 0,    0xff, 0)
+        yield from self.write_led_color(dut, 2, 0,    0,    0xff)
 
         yield
         yield from self.pulse(dut.start_in)
