@@ -16,12 +16,13 @@ from .nrziencoder     import NRZIEncoder
 from .shiftregister   import InputShiftRegister, OutputShiftRegister
 from .timer           import Timer
 from .fifo            import TransactionalizedFIFO
+from .ringoscillator  import RingOscillator
 
 __all__ = [
     'rising_edge_detected', 'falling_edge_detected', 'any_edge_detected',
     'past_value_of','synchronize', 'EdgeToPulse', 'bits',
     'synchronize', 'stretch_strobe_signal',
-    'OneHotMultiplexer', 'LinearFeedbackShiftRegister',
+    'OneHotMultiplexer', 'LinearFeedbackShiftRegister', 'RingOscillator',
     'DividingCounter', 'SimpleClockDivider',
     'NRZIEncoder', 'InputShiftRegister', 'OutputShiftRegister',
     'Timer',
