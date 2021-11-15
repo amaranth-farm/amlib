@@ -35,6 +35,13 @@ class IntegratedLogicAnalyzer(Elaboratable):
 
     Attributes
     ----------
+    enable: Signal(), input
+        This input is only available if `use_enable` is True.
+        When enable goes low then the logic analyzer freezes.
+        That means, this stops a running capture, and
+        ignores the trigger, if no capture is ongoing.
+        This is useful to avoid capturing uninteresting parts
+        of the input.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
     sampling: Signal(), output
@@ -66,9 +73,12 @@ class IntegratedLogicAnalyzer(Elaboratable):
         This also can act like an implicit synchronizer; so asynchronous inputs
         are allowed if this number is >= 2. Note that the trigger strobe is read
         on the rising edge of the clock.
+    use_enable: bool
+        This provides an 'enable' signal which freezes the ILA whenever that signal
+        goes low.
     """
 
-    def __init__(self, *, signals, sample_depth, domain="sync", sample_rate=60e6, samples_pretrigger=1):
+    def __init__(self, *, signals, sample_depth, domain="sync", sample_rate=60e6, samples_pretrigger=1, use_enable=False):
         self.domain             = domain
         self.signals            = signals
         self.inputs             = Cat(*signals)
@@ -87,6 +97,10 @@ class IntegratedLogicAnalyzer(Elaboratable):
         #
         # I/O port
         #
+        self.use_enable = use_enable
+        if use_enable:
+            self.enable  = Signal()
+
         self.trigger  = Signal()
         self.sampling = Signal()
         self.complete = Signal()
@@ -135,42 +149,47 @@ class IntegratedLogicAnalyzer(Elaboratable):
         # Don't sample unless our FSM asserts our sample signal explicitly.
         m.d.sync += write_port.en.eq(0)
 
-        with m.FSM() as fsm:
+        enable_condition = m.If(self.enable) if self.use_enable else m.If(1)
 
-            m.d.comb += self.sampling.eq(~fsm.ongoing("IDLE"))
+        with enable_condition:
+            with m.FSM() as fsm:
 
-            # IDLE: wait for the trigger strobe
-            with m.State('IDLE'):
+                m.d.comb += self.sampling.eq(~fsm.ongoing("IDLE"))
 
-                with m.If(self.trigger):
-                    m.next = 'SAMPLE'
+                # IDLE: wait for the trigger strobe
+                with m.State('IDLE'):
 
-                    # Grab a sample as our trigger is asserted.
+                    with m.If(self.trigger):
+                        m.next = 'SAMPLE'
+
+                        # Grab a sample as our trigger is asserted.
+                        m.d.sync += [
+                            write_port.en  .eq(1),
+                            write_position .eq(0),
+
+                            self.complete  .eq(0),
+                        ]
+
+                # SAMPLE: do our sampling
+                with m.State('SAMPLE'):
+
+                    # Sample until we run out of samples.
                     m.d.sync += [
                         write_port.en  .eq(1),
-                        write_position .eq(0),
-
-                        self.complete  .eq(0),
+                        write_position .eq(write_position + 1),
                     ]
 
-            # SAMPLE: do our sampling
-            with m.State('SAMPLE'):
+                    # If this is the last sample, we're done. Finish up.
+                    with m.If(write_position + 1 == self.sample_depth):
+                        m.next = "IDLE"
 
-                # Sample until we run out of samples.
-                m.d.sync += [
-                    write_port.en  .eq(1),
-                    write_position .eq(write_position + 1),
-                ]
+                        m.d.sync += [
+                            self.complete .eq(1),
+                            write_port.en .eq(0)
+                        ]
 
-                # If this is the last sample, we're done. Finish up.
-                with m.If(write_position + 1 == self.sample_depth):
-                    m.next = "IDLE"
-
-                    m.d.sync += [
-                        self.complete .eq(1),
-                        write_port.en .eq(0)
-                    ]
-
+        with m.Else():
+            m.d.comb += self.sampling.eq(0)
 
         # Convert our sync domain to the domain requested by the user, if necessary.
         if self.domain != "sync":
@@ -287,6 +306,13 @@ class SyncSerialILA(Elaboratable):
 
     Attributes
     ----------
+    enable: Signal(), input
+        This input is only available if `use_enable` is True.
+        When enable goes low then the logic analyzer freezes.
+        That means, this stops a running capture, and
+        ignores the trigger, if no capture is ongoing.
+        This is useful to avoid capturing uninteresting parts
+        of the input.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
     sampling: Signal(), output
@@ -324,6 +350,10 @@ class SyncSerialILA(Elaboratable):
         If False or not provided, the CS line will be assumed to be asserted when cs=1.
         This can be used to share a simple two-device SPI bus, so two internal endpoints
         can use the same CS line, with two opposite polarities.
+
+    use_enable: bool
+        This provides an 'enable' signal which freezes the ILA whenever that signal
+        goes low.
     """
 
     def __init__(self, *, signals, sample_depth, clock_polarity=0, clock_phase=1, cs_idles_high=False, **kwargs):
@@ -358,6 +388,9 @@ class SyncSerialILA(Elaboratable):
         self.sample_depth  = self.ila.sample_depth
         self.sample_rate   = self.ila.sample_rate
         self.sample_period = self.ila.sample_period
+
+        if kwargs.get('use_enable'):
+            self.enable = self.ila.enable
 
         # Figure out how many bytes we'll send per sample.
         # We'll always send things squished into 32-bit chunks, as this is what the SPI engine
@@ -493,6 +526,13 @@ class StreamILA(Elaboratable):
 
     Attributes
     ----------
+    enable: Signal(), input
+        This input is only available if `use_enable` is True.
+        When enable goes low then the logic analyzer freezes.
+        That means, this stops a running capture, and
+        ignores the trigger, if no capture is ongoing.
+        This is useful to avoid capturing uninteresting parts
+        of the input.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
     sampling: Signal(), output
@@ -519,6 +559,10 @@ class StreamILA(Elaboratable):
         The number of our samples which should be captured _before_ the trigger.
         This also can act like an implicit synchronizer; so asynchronous inputs
         are allowed if this number is >= 2.
+
+    use_enable: bool
+        This provides an 'enable' signal which freezes the ILA whenever that signal
+        goes low.
     """
 
     def __init__(self, *, signals, sample_depth, o_domain=None, **kwargs):
@@ -542,6 +586,9 @@ class StreamILA(Elaboratable):
         self.sample_depth  = self.ila.sample_depth
         self.sample_rate   = self.ila.sample_rate
         self.sample_period = self.ila.sample_period
+
+        if kwargs.get('use_enable'):
+            self.enable = self.ila.enable
 
         # Bolster our bits per sample "word" up to a power of two.
         self.bits_per_sample = 2 ** ((self.ila.sample_width - 1).bit_length())
@@ -679,6 +726,13 @@ class AsyncSerialILA(Elaboratable):
 
     Attributes
     ----------
+    enable: Signal(), input
+        This input is only available if `use_enable` is True.
+        When enable goes low then the logic analyzer freezes.
+        That means, this stops a running capture, and
+        ignores the trigger, if no capture is ongoing.
+        This is useful to avoid capturing uninteresting parts
+        of the input.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
     sampling: Signal(), output
@@ -705,6 +759,10 @@ class AsyncSerialILA(Elaboratable):
         The number of our samples which should be captured _before_ the trigger.
         This also can act like an implicit synchronizer; so asynchronous inputs
         are allowed if this number is >= 2.
+
+    use_enable: bool
+        This provides an 'enable' signal which freezes the ILA whenever that signal
+        goes low.
     """
 
     def __init__(self, *, signals, sample_depth, divisor, **kwargs):
@@ -735,6 +793,9 @@ class AsyncSerialILA(Elaboratable):
         self.sample_period    = self.ila.sample_period
         self.bits_per_sample  = self.ila.bits_per_sample
         self.bytes_per_sample = self.ila.bytes_per_sample
+
+        if kwargs.get('use_enable'):
+            self.enable = self.ila.enable
 
         # Expose our ILA's trigger and status ports directly.
         self.trigger  = self.ila.trigger
