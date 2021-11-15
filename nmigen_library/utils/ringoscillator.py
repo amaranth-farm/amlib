@@ -2,7 +2,11 @@ from nmigen import *
 from nmigen.build import Platform
 
 class RingOscillator(Elaboratable):
-    def __init__(self, no_gates=3):
+    """
+        DO NOT USE:
+        currently not synthesizable, because it contains a combinational loop
+    """
+    def __init__(self, no_gates=11):
         assert(no_gates % 2 == 1, "number of gates must be odd, otherwise the ring oscillator will not oscillate")
 
         # parameters
