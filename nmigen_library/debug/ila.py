@@ -99,7 +99,7 @@ class IntegratedLogicAnalyzer(Elaboratable):
         #
         self.use_enable = use_enable
         if use_enable:
-            self.enable  = Signal()
+            self.enable = Signal()
 
         self.trigger  = Signal()
         self.sampling = Signal()
