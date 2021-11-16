@@ -1,0 +1,63 @@
+[*]
+[*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
+[*] Tue Nov 16 18:43:29 2021
+[*]
+[dumpfile] "test_IntegratedLogicAnalyzerPretriggerTest_test_sampling.vcd"
+[dumpfile_mtime] "Tue Nov 16 18:43:08 2021"
+[dumpfile_size] 41965
+[savefile] "test/ila-pretrigger.gtkw"
+[timestart] 171250
+[size] 3828 2090
+[pos] -1 -1
+*-14.000000 36940 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[sst_width] 575
+[signals_width] 491
+[sst_expanded] 1
+[sst_vpaned_height] 658
+@28
+top.clk
+@200
+-Inputs
+@28
+[color] 3
+top.enable
+[color] 3
+top.trigger
+@c00022
+[color] 3
+#{Input} top.pretrigger_samples.input_c (0)top.pretrigger_samples.input_b[29:0] (1)top.pretrigger_samples.input_b[29:0] (2)top.pretrigger_samples.input_b[29:0] (3)top.pretrigger_samples.input_b[29:0] (4)top.pretrigger_samples.input_b[29:0] (5)top.pretrigger_samples.input_b[29:0] (6)top.pretrigger_samples.input_b[29:0] (7)top.pretrigger_samples.input_b[29:0] (8)top.pretrigger_samples.input_b[29:0] (9)top.pretrigger_samples.input_b[29:0] (10)top.pretrigger_samples.input_b[29:0] (11)top.pretrigger_samples.input_b[29:0] (12)top.pretrigger_samples.input_b[29:0] (13)top.pretrigger_samples.input_b[29:0] (14)top.pretrigger_samples.input_b[29:0] (15)top.pretrigger_samples.input_b[29:0] (16)top.pretrigger_samples.input_b[29:0] (17)top.pretrigger_samples.input_b[29:0] (18)top.pretrigger_samples.input_b[29:0] (19)top.pretrigger_samples.input_b[29:0] (20)top.pretrigger_samples.input_b[29:0] (21)top.pretrigger_samples.input_b[29:0] (22)top.pretrigger_samples.input_b[29:0] (23)top.pretrigger_samples.input_b[29:0] (24)top.pretrigger_samples.input_b[29:0] (25)top.pretrigger_samples.input_b[29:0] (26)top.pretrigger_samples.input_b[29:0] (27)top.pretrigger_samples.input_b[29:0] (28)top.pretrigger_samples.input_b[29:0] (29)top.pretrigger_samples.input_b[29:0] top.pretrigger_samples.input_a
+@28
+top.pretrigger_samples.input_c
+@22
+top.pretrigger_samples.input_b[29:0]
+@28
+top.pretrigger_samples.input_a
+@1401200
+-group_end
+@200
+-ILA
+@28
+top.ila_fsm_state
+@22
+top.delayed_inputs[31:0]
+@28
+top.delayed_enable
+@22
+top.ila_buffer_w_addr[4:0]
+top.ila_buffer_w_data[31:0]
+@200
+-Outputs
+@23
+[color] 3
+top.ila_buffer_r_addr[4:0]
+@22
+[color] 2
+top.ila_buffer_r_data[31:0]
+@28
+[color] 2
+top.capturing
+[color] 2
+top.sampling
+[pattern_trace] 1
+[pattern_trace] 0

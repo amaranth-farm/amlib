@@ -2,7 +2,8 @@
 
 export GENERATE_VCDS=1
 
-python3 -m unittest nmigen_library.debug.ila.IntegratedLogicAnalyzerTest
+python3 -m unittest nmigen_library.debug.ila.IntegratedLogicAnalyzerBasicTest
+python3 -m unittest nmigen_library.debug.ila.IntegratedLogicAnalyzerPretriggerTest
 
 python3 -m unittest nmigen_library.io.spi.SPIControllerInterfaceTest
 python3 -m unittest nmigen_library.io.spi.SPIDeviceInterfaceTest
