@@ -37,15 +37,19 @@ class IntegratedLogicAnalyzer(Elaboratable):
     ----------
     enable: Signal(), input
         This input is only available if `with_enable` is True.
-        When enable goes low then the logic analyzer freezes.
-        That means, this stops a running capture, and
-        ignores the trigger, if no capture is ongoing.
+        When enable goes low the trigger will be ignored
+        and sampling will be suspended.
         This is useful to avoid capturing uninteresting parts
         of the input.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
+        Note that the sample at the same cycle as the trigger will
+        be the first sample to be captured.
+    capturing: Signal(), output
+        Indicates that the trigger has occurred and sample memory
+        is not yet full
     sampling: Signal(), output
-        Indicates when sampling is in progress.
+        Indicates when data is being written into ILA memory
 
     complete: Signal(), output
         Indicates when sampling is complete and ready to be read.
@@ -101,9 +105,10 @@ class IntegratedLogicAnalyzer(Elaboratable):
         if with_enable:
             self.enable = Signal()
 
-        self.trigger  = Signal()
-        self.sampling = Signal()
-        self.complete = Signal()
+        self.trigger   = Signal()
+        self.capturing = Signal()
+        self.sampling  = Signal()
+        self.complete  = Signal()
 
         self.captured_sample_number = Signal(range(0, self.sample_depth))
         self.captured_sample        = Signal(self.sample_width)
@@ -111,8 +116,7 @@ class IntegratedLogicAnalyzer(Elaboratable):
 
     def elaborate(self, platform):
         m  = Module()
-
-        # TODO: switch this to a single-port RAM
+        with_enable = self.with_enable
 
         # Memory ports.
         write_port = self.mem.write_port()
@@ -120,15 +124,26 @@ class IntegratedLogicAnalyzer(Elaboratable):
         m.submodules += [write_port, read_port]
 
         # If necessary, create synchronized versions of the relevant signals.
-        if self.samples_pretrigger >= 2:
+        if self.samples_pretrigger >= 1:
+            # We need to store one extra sample, because
+            # capture starts one cycle after the trigger.
+            # Thus we have to cache at least one sample
+            # if we want to capture the sample value at trigger time
+            no_stages = self.samples_pretrigger + 1
+
             delayed_inputs = Signal.like(self.inputs)
-            m.submodules += FFSynchronizer(self.inputs,  delayed_inputs,
-                stages=self.samples_pretrigger)
-        elif self.samples_pretrigger == 1:
+            m.submodules.pretrigger_samples = \
+                FFSynchronizer(self.inputs,  delayed_inputs, stages=no_stages)
+            if with_enable:
+                delayed_enable = Signal()
+                m.submodules.pretrigger_enable = \
+                    FFSynchronizer(self.enable, delayed_enable, stages=no_stages)
+        else:
             delayed_inputs = Signal.like(self.inputs)
             m.d.sync += delayed_inputs.eq(self.inputs)
-        else:
-            delayed_inputs  = self.inputs
+            if with_enable:
+                delayed_enable = Signal()
+                m.d.sync += delayed_enable.eq(self.enable)
 
         # Counter that keeps track of our write position.
         write_position = Signal(range(0, self.sample_depth))
@@ -147,49 +162,41 @@ class IntegratedLogicAnalyzer(Elaboratable):
         m.d.comb += self.test.eq(read_port.addr)
 
         # Don't sample unless our FSM asserts our sample signal explicitly.
-        m.d.sync += write_port.en.eq(0)
+        sampling = Signal()
+        m.d.comb += [
+            write_port.en.eq(sampling),
+            self.sampling.eq(sampling),
+        ]
 
-        enable_condition = m.If(self.enable) if self.with_enable else m.If(1)
+        with m.FSM() as fsm:
+            enable = self.enable if self.with_enable else 1
+            m.d.comb += self.capturing.eq(fsm.ongoing("CAPTURE"))
 
-        with enable_condition:
-            with m.FSM() as fsm:
+            # IDLE: wait for the trigger strobe
+            with m.State('IDLE'):
+                m.d.comb += sampling.eq(0)
 
-                m.d.comb += self.sampling.eq(~fsm.ongoing("IDLE"))
+                with m.If(self.trigger & enable):
+                    m.next = 'CAPTURE'
 
-                # IDLE: wait for the trigger strobe
-                with m.State('IDLE'):
-
-                    with m.If(self.trigger):
-                        m.next = 'SAMPLE'
-
-                        # Grab a sample as our trigger is asserted.
-                        m.d.sync += [
-                            write_port.en  .eq(1),
-                            write_position .eq(0),
-
-                            self.complete  .eq(0),
-                        ]
-
-                # SAMPLE: do our sampling
-                with m.State('SAMPLE'):
-
-                    # Sample until we run out of samples.
+                    # Prepare to capture the first sample
                     m.d.sync += [
-                        write_port.en  .eq(1),
-                        write_position .eq(write_position + 1),
+                        write_position .eq(0),
+
+                        self.complete  .eq(0),
                     ]
 
+            with m.State('CAPTURE'):
+                m.d.comb += sampling.eq(delayed_enable)
+
+                with m.If(delayed_enable):
+                    m.d.sync += write_position .eq(write_position + 1)
+
                     # If this is the last sample, we're done. Finish up.
-                    with m.If(write_position + 1 == self.sample_depth):
+                    with m.If(write_position == (self.sample_depth - 1)):
                         m.next = "IDLE"
 
-                        m.d.sync += [
-                            self.complete .eq(1),
-                            write_port.en .eq(0)
-                        ]
-
-        with m.Else():
-            m.d.comb += self.sampling.eq(0)
+                        m.d.sync += self.complete .eq(1)
 
         # Convert our sync domain to the domain requested by the user, if necessary.
         if self.domain != "sync":
@@ -207,7 +214,9 @@ class IntegratedLogicAnalyzerTest(GatewareTestCase):
 
         return IntegratedLogicAnalyzer(
             signals=[self.input_a, self.input_b, self.input_c],
-            sample_depth = 32
+            sample_depth = 32,
+            samples_pretrigger=0,
+            with_enable=True
         )
 
 
@@ -247,6 +256,7 @@ class IntegratedLogicAnalyzerTest(GatewareTestCase):
         def sample_value(i):
             return i | (i << 8) | (i << 16) | (0xFF << 24)
 
+        yield self.dut.enable.eq(1)
         yield from self.provide_all_signals(0xDEADBEEF)
         yield
 
@@ -278,7 +288,10 @@ class IntegratedLogicAnalyzerTest(GatewareTestCase):
         # Populate the memory with a variety of interesting signals;
         # and continue afterwards for a couple of cycles to make sure
         # these don't make it into our sample buffer.
-        for i in range(2, 34):
+        for i in range(2, 32 + 32):
+            # after the first two samples above, we only sample every
+            # other sample
+            yield self.dut.enable.eq(i % 2 == 0)
             yield from self.provide_all_signals(sample_value(i))
             yield
 
@@ -286,9 +299,13 @@ class IntegratedLogicAnalyzerTest(GatewareTestCase):
         self.assertEqual((yield self.dut.sampling), 0)
         self.assertEqual((yield self.dut.complete), 1)
 
-        # Validate the memory values that were captured.
-        for i in range(32):
-            yield from self.assert_sample_value(i, sample_value(i))
+        yield from self.assert_sample_value(0, sample_value(0))
+        yield from self.assert_sample_value(1, sample_value(1))
+
+        # Validate the memory values after the first two samples
+        # were captured are the even samples
+        for i in range(2, 32):
+            yield from self.assert_sample_value(i, sample_value((i - 1) * 2))
 
         # All of those reads shouldn't change our completeness.
         self.assertEqual((yield self.dut.sampling), 0)
@@ -315,8 +332,11 @@ class SyncSerialILA(Elaboratable):
         of the input.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
+    capturing: Signal(), output
+        Indicates that the trigger has occurred and sample memory
+        is not yet full
     sampling: Signal(), output
-        Indicates when sampling is in progress.
+        Indicates when data is being written into ILA memory
     complete: Signal(), output
         Indicates when sampling is complete and ready to be read.
 
@@ -405,9 +425,10 @@ class SyncSerialILA(Elaboratable):
         self.bytes_per_sample = self.bits_per_sample // 8
 
         # Expose our ILA's trigger and status ports directly.
-        self.trigger  = self.ila.trigger
-        self.sampling = self.ila.sampling
-        self.complete = self.ila.complete
+        self.trigger   = self.ila.trigger
+        self.capturing = self.ila.capturing
+        self.sampling  = self.ila.sampling
+        self.complete  = self.ila.complete
 
 
     def elaborate(self, platform):
@@ -535,8 +556,11 @@ class StreamILA(Elaboratable):
         of the input.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
+    capturing: Signal(), output
+        Indicates that the trigger has occurred and sample memory
+        is not yet full
     sampling: Signal(), output
-        Indicates when sampling is in progress.
+        Indicates when data is being written into ILA memory
     complete: Signal(), output
         Indicates when sampling is complete and ready to be read.
 
@@ -600,10 +624,10 @@ class StreamILA(Elaboratable):
         self.stream  = StreamInterface(payload_width=self.bits_per_sample)
         self.trigger = Signal()
 
-
         # Expose our ILA's trigger and status ports directly.
-        self.sampling = self.ila.sampling
-        self.complete = self.ila.complete
+        self.capturing = self.ila.capturing
+        self.sampling  = self.ila.sampling
+        self.complete  = self.ila.complete
 
 
     def elaborate(self, platform):
@@ -735,8 +759,11 @@ class AsyncSerialILA(Elaboratable):
         of the input.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
+    capturing: Signal(), output
+        Indicates that the trigger has occurred and sample memory
+        is not yet full
     sampling: Signal(), output
-        Indicates when sampling is in progress.
+        Indicates when data is being written into ILA memory
     complete: Signal(), output
         Indicates when sampling is complete and ready to be read.
 
@@ -798,9 +825,10 @@ class AsyncSerialILA(Elaboratable):
             self.enable = self.ila.enable
 
         # Expose our ILA's trigger and status ports directly.
-        self.trigger  = self.ila.trigger
-        self.sampling = self.ila.sampling
-        self.complete = self.ila.complete
+        self.trigger   = self.ila.trigger
+        self.capturing = self.ila.capturing
+        self.sampling  = self.ila.sampling
+        self.complete  = self.ila.complete
 
 
     def elaborate(self, platform):
