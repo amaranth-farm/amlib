@@ -36,7 +36,7 @@ class IntegratedLogicAnalyzer(Elaboratable):
     Attributes
     ----------
     enable: Signal(), input
-        This input is only available if `use_enable` is True.
+        This input is only available if `with_enable` is True.
         When enable goes low then the logic analyzer freezes.
         That means, this stops a running capture, and
         ignores the trigger, if no capture is ongoing.
@@ -73,12 +73,12 @@ class IntegratedLogicAnalyzer(Elaboratable):
         This also can act like an implicit synchronizer; so asynchronous inputs
         are allowed if this number is >= 2. Note that the trigger strobe is read
         on the rising edge of the clock.
-    use_enable: bool
+    with_enable: bool
         This provides an 'enable' signal which freezes the ILA whenever that signal
         goes low.
     """
 
-    def __init__(self, *, signals, sample_depth, domain="sync", sample_rate=60e6, samples_pretrigger=1, use_enable=False):
+    def __init__(self, *, signals, sample_depth, domain="sync", sample_rate=60e6, samples_pretrigger=1, with_enable=False):
         self.domain             = domain
         self.signals            = signals
         self.inputs             = Cat(*signals)
@@ -97,8 +97,8 @@ class IntegratedLogicAnalyzer(Elaboratable):
         #
         # I/O port
         #
-        self.use_enable = use_enable
-        if use_enable:
+        self.with_enable = with_enable
+        if with_enable:
             self.enable = Signal()
 
         self.trigger  = Signal()
@@ -149,7 +149,7 @@ class IntegratedLogicAnalyzer(Elaboratable):
         # Don't sample unless our FSM asserts our sample signal explicitly.
         m.d.sync += write_port.en.eq(0)
 
-        enable_condition = m.If(self.enable) if self.use_enable else m.If(1)
+        enable_condition = m.If(self.enable) if self.with_enable else m.If(1)
 
         with enable_condition:
             with m.FSM() as fsm:
@@ -307,7 +307,7 @@ class SyncSerialILA(Elaboratable):
     Attributes
     ----------
     enable: Signal(), input
-        This input is only available if `use_enable` is True.
+        This input is only available if `with_enable` is True.
         When enable goes low then the logic analyzer freezes.
         That means, this stops a running capture, and
         ignores the trigger, if no capture is ongoing.
@@ -351,7 +351,7 @@ class SyncSerialILA(Elaboratable):
         This can be used to share a simple two-device SPI bus, so two internal endpoints
         can use the same CS line, with two opposite polarities.
 
-    use_enable: bool
+    with_enable: bool
         This provides an 'enable' signal which freezes the ILA whenever that signal
         goes low.
     """
@@ -389,7 +389,7 @@ class SyncSerialILA(Elaboratable):
         self.sample_rate   = self.ila.sample_rate
         self.sample_period = self.ila.sample_period
 
-        if kwargs.get('use_enable'):
+        if kwargs.get('with_enable'):
             self.enable = self.ila.enable
 
         # Figure out how many bytes we'll send per sample.
@@ -527,7 +527,7 @@ class StreamILA(Elaboratable):
     Attributes
     ----------
     enable: Signal(), input
-        This input is only available if `use_enable` is True.
+        This input is only available if `with_enable` is True.
         When enable goes low then the logic analyzer freezes.
         That means, this stops a running capture, and
         ignores the trigger, if no capture is ongoing.
@@ -560,7 +560,7 @@ class StreamILA(Elaboratable):
         This also can act like an implicit synchronizer; so asynchronous inputs
         are allowed if this number is >= 2.
 
-    use_enable: bool
+    with_enable: bool
         This provides an 'enable' signal which freezes the ILA whenever that signal
         goes low.
     """
@@ -587,7 +587,7 @@ class StreamILA(Elaboratable):
         self.sample_rate   = self.ila.sample_rate
         self.sample_period = self.ila.sample_period
 
-        if kwargs.get('use_enable'):
+        if kwargs.get('with_enable'):
             self.enable = self.ila.enable
 
         # Bolster our bits per sample "word" up to a power of two.
@@ -727,7 +727,7 @@ class AsyncSerialILA(Elaboratable):
     Attributes
     ----------
     enable: Signal(), input
-        This input is only available if `use_enable` is True.
+        This input is only available if `with_enable` is True.
         When enable goes low then the logic analyzer freezes.
         That means, this stops a running capture, and
         ignores the trigger, if no capture is ongoing.
@@ -760,7 +760,7 @@ class AsyncSerialILA(Elaboratable):
         This also can act like an implicit synchronizer; so asynchronous inputs
         are allowed if this number is >= 2.
 
-    use_enable: bool
+    with_enable: bool
         This provides an 'enable' signal which freezes the ILA whenever that signal
         goes low.
     """
@@ -794,7 +794,7 @@ class AsyncSerialILA(Elaboratable):
         self.bits_per_sample  = self.ila.bits_per_sample
         self.bytes_per_sample = self.ila.bytes_per_sample
 
-        if kwargs.get('use_enable'):
+        if kwargs.get('with_enable'):
             self.enable = self.ila.enable
 
         # Expose our ILA's trigger and status ports directly.
