@@ -11,6 +11,11 @@ python3 -m unittest nmigen_library.io.spi.SPIRegisterInterfaceTest
 python3 -m unittest nmigen_library.io.i2s.I2STransmitterTest
 python3 -m unittest nmigen_library.io.i2s.I2SLoopbackTest
 
+python3 -m unittest nmigen_library.dsp.fixedpointfirfilter.FixedPointFIRFilterTest
+python3 -m unittest nmigen_library.dsp.fixedpointiirfilter.FixedPointIIRFilterTest
+python3 -m unittest nmigen_library.dsp.resampler.ResamplerTestFIR
+python3 -m unittest nmigen_library.dsp.resampler.ResamplerTestIIR
+
 python3 -m unittest nmigen_library.stream.i2c.I2CStreamTransmitterTest
 python3 -m unittest nmigen_library.stream.uart.UARTTransmitterTest
 python3 -m unittest nmigen_library.stream.uart.UARTMultibyteTransmitterTest

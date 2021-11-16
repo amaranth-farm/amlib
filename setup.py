@@ -19,6 +19,7 @@ setup(
     license="Apache License 2.0",
     setup_requires=["wheel", "setuptools", "setuptools_scm"],
     install_requires=[
+        "scipy",
         "nmigen>=0.2,<0.4",
         "importlib_metadata; python_version<'3.8'",
     ],
