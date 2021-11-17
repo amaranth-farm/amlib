@@ -184,7 +184,7 @@ class IntegratedLogicAnalyzer(Elaboratable):
                     ]
 
             with m.State('CAPTURE'):
-                m.d.comb += sampling.eq(delayed_enable)
+                m.d.comb += sampling.eq(delayed_enable if with_enable else 1)
 
                 with m.If(delayed_enable):
                     m.d.sync += write_position .eq(write_position + 1)
