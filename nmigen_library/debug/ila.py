@@ -184,9 +184,10 @@ class IntegratedLogicAnalyzer(Elaboratable):
                     ]
 
             with m.State('CAPTURE'):
-                m.d.comb += sampling.eq(delayed_enable if with_enable else 1)
+                enabled = delayed_enable if with_enable else 1
+                m.d.comb += sampling.eq(enabled)
 
-                with m.If(delayed_enable):
+                with m.If(enabled):
                     m.d.sync += write_position .eq(write_position + 1)
 
                     # If this is the last sample, we're done. Finish up.
