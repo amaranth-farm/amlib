@@ -17,10 +17,10 @@ import subprocess
 
 from abc             import ABCMeta, abstractmethod
 
-from nmigen          import Signal, Module, Cat, Elaboratable, Memory, ClockDomain, DomainRenamer
+from nmigen          import Signal, Module, Cat, Elaboratable, Memory, DomainRenamer
 from nmigen.hdl.ast  import Rose
 from nmigen.lib.cdc  import FFSynchronizer
-from nmigen.lib.fifo import AsyncFIFOBuffered
+from nmigen.lib.fifo import SyncFIFOBuffered, AsyncFIFOBuffered
 from vcd             import VCDWriter
 from vcd.gtkw        import GTKWSave
 
@@ -74,7 +74,7 @@ class IntegratedLogicAnalyzer(Elaboratable):
     samples_pretrigger: int
         The number of our samples which should be captured _before_ the trigger.
         This also can act like an implicit synchronizer; so asynchronous inputs
-        are allowed if this number is >= 2. Note that the trigger strobe is read
+        are allowed if this number is >= 1. Note that the trigger strobe is read
         on the rising edge of the clock.
     with_enable: bool
         This provides an 'enable' signal which freezes the ILA whenever that signal
@@ -124,19 +124,43 @@ class IntegratedLogicAnalyzer(Elaboratable):
 
         # If necessary, create synchronized versions of the relevant signals.
         if self.samples_pretrigger >= 1:
-            # We need to store one extra sample, because
-            # capture starts one cycle after the trigger.
-            # Thus we have to cache at least one sample
-            # if we want to capture the sample value at trigger time
-            no_stages = self.samples_pretrigger + 1
-
+            synced_inputs  = Signal.like(self.inputs)
             delayed_inputs = Signal.like(self.inputs)
+
+            # the first stage captures the trigger
+            # the second stage the first pretrigger sample
             m.submodules.pretrigger_samples = \
-                FFSynchronizer(self.inputs,  delayed_inputs, stages=no_stages)
+                FFSynchronizer(self.inputs,  synced_inputs)
             if with_enable:
-                delayed_enable = Signal()
+                synced_enable  = Signal()
                 m.submodules.pretrigger_enable = \
-                    FFSynchronizer(self.enable, delayed_enable, stages=no_stages)
+                    FFSynchronizer(self.enable, synced_enable)
+
+            if self.samples_pretrigger == 1:
+                m.d.comb += delayed_inputs.eq(synced_inputs)
+                if with_enable:
+                    delayed_enable = Signal()
+                    m.d.comb += delayed_enable.eq(synced_enable)
+            else: # samples_pretrigger >= 2
+                capture_fifo_width = self.sample_width
+                if self.with_enable:
+                    capture_fifo_width += 1
+
+                m.submodules.pretrigger_fifo = pretrigger_fifo =  \
+                    DomainRenamer(self.domain)(SyncFIFOBuffered(width=capture_fifo_width, depth=self.samples_pretrigger))
+                m.d.comb += [
+                    pretrigger_fifo.w_data.eq(synced_inputs),
+                    delayed_inputs.eq(pretrigger_fifo.r_data),
+                    pretrigger_fifo.w_en.eq(1),
+                    # buffer the specified number of pretrigger samples
+                    pretrigger_fifo.r_en.eq(pretrigger_fifo.level == (pretrigger_fifo.depth - 1)),
+                ]
+                if with_enable:
+                    delayed_enable = Signal()
+                    m.d.comb += [
+                        pretrigger_fifo.w_data[-1].eq(synced_enable),
+                        delayed_enable.eq(pretrigger_fifo.r_data[-1]),
+                    ]
         else:
             delayed_inputs = Signal.like(self.inputs)
             m.d.sync += delayed_inputs.eq(self.inputs)
