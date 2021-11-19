@@ -37,8 +37,7 @@ class IntegratedLogicAnalyzer(Elaboratable):
     ----------
     enable: Signal(), input
         This input is only available if `with_enable` is True.
-        When enable goes low the trigger will be ignored
-        and sampling will be suspended.
+        When enable goes low sampling will be suspended.
         This is useful to avoid capturing uninteresting parts
         of the input.
     trigger: Signal(), input
@@ -400,9 +399,7 @@ class SyncSerialILA(Elaboratable):
     ----------
     enable: Signal(), input
         This input is only available if `with_enable` is True.
-        When enable goes low then the logic analyzer freezes.
-        That means, this stops a running capture, and
-        ignores the trigger, if no capture is ongoing.
+        When enable goes low sampling will be suspended.
         This is useful to avoid capturing uninteresting parts
         of the input.
     trigger: Signal(), input
@@ -624,9 +621,7 @@ class StreamILA(Elaboratable):
     ----------
     enable: Signal(), input
         This input is only available if `with_enable` is True.
-        When enable goes low then the logic analyzer freezes.
-        That means, this stops a running capture, and
-        ignores the trigger, if no capture is ongoing.
+        When enable goes low sampling will be suspended.
         This is useful to avoid capturing uninteresting parts
         of the input.
     trigger: Signal(), input
@@ -827,9 +822,7 @@ class AsyncSerialILA(Elaboratable):
     ----------
     enable: Signal(), input
         This input is only available if `with_enable` is True.
-        When enable goes low then the logic analyzer freezes.
-        That means, this stops a running capture, and
-        ignores the trigger, if no capture is ongoing.
+        When enable goes low sampling will be suspended.
         This is useful to avoid capturing uninteresting parts
         of the input.
     trigger: Signal(), input
