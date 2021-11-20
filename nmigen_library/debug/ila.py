@@ -196,7 +196,7 @@ class IntegratedLogicAnalyzer(Elaboratable):
             with m.State('IDLE'):
                 m.d.comb += sampling.eq(0)
 
-                with m.If(self.trigger & enable):
+                with m.If(self.trigger):
                     m.next = 'CAPTURE'
 
                     # Prepare to capture the first sample
