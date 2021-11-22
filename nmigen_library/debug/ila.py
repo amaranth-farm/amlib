@@ -189,7 +189,6 @@ class IntegratedLogicAnalyzer(Elaboratable):
         ]
 
         with m.FSM(name="ila_fsm") as fsm:
-            enable = self.enable if self.with_enable else 1
             m.d.comb += self.capturing.eq(fsm.ongoing("CAPTURE"))
 
             # IDLE: wait for the trigger strobe
