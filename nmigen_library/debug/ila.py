@@ -37,9 +37,7 @@ class IntegratedLogicAnalyzer(Elaboratable):
     ----------
     enable: Signal(), input
         This input is only available if `with_enable` is True.
-        When enable goes low sampling will be suspended.
-        This is useful to avoid capturing uninteresting parts
-        of the input.
+        Only samples with enable high will be captured.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
         Note that the sample at the same cycle as the trigger will
@@ -77,8 +75,8 @@ class IntegratedLogicAnalyzer(Elaboratable):
         are allowed if this number is >= 1. Note that the trigger strobe is read
         on the rising edge of the clock.
     with_enable: bool
-        This provides an 'enable' signal which freezes the ILA whenever that signal
-        goes low.
+        This provides an 'enable' signal.
+        Only samples with enable high will be captured.
     """
 
     def __init__(self, *, signals, sample_depth, domain="sync", sample_rate=60e6, samples_pretrigger=1, with_enable=False):
@@ -439,9 +437,7 @@ class SyncSerialILA(Elaboratable):
     ----------
     enable: Signal(), input
         This input is only available if `with_enable` is True.
-        When enable goes low sampling will be suspended.
-        This is useful to avoid capturing uninteresting parts
-        of the input.
+        Only samples with enable high will be captured.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
     capturing: Signal(), output
@@ -484,8 +480,8 @@ class SyncSerialILA(Elaboratable):
         can use the same CS line, with two opposite polarities.
 
     with_enable: bool
-        This provides an 'enable' signal which freezes the ILA whenever that signal
-        goes low.
+        This provides an 'enable' signal.
+        Only samples with enable high will be captured.
     """
 
     def __init__(self, *, signals, sample_depth, clock_polarity=0, clock_phase=1, cs_idles_high=False, **kwargs):
@@ -661,9 +657,7 @@ class StreamILA(Elaboratable):
     ----------
     enable: Signal(), input
         This input is only available if `with_enable` is True.
-        When enable goes low sampling will be suspended.
-        This is useful to avoid capturing uninteresting parts
-        of the input.
+        Only samples with enable high will be captured.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
     capturing: Signal(), output
@@ -695,8 +689,8 @@ class StreamILA(Elaboratable):
         are allowed if this number is >= 2.
 
     with_enable: bool
-        This provides an 'enable' signal which freezes the ILA whenever that signal
-        goes low.
+        This provides an 'enable' signal.
+        Only samples with enable high will be captured.
     """
 
     def __init__(self, *, signals, sample_depth, o_domain=None, **kwargs):
@@ -862,9 +856,7 @@ class AsyncSerialILA(Elaboratable):
     ----------
     enable: Signal(), input
         This input is only available if `with_enable` is True.
-        When enable goes low sampling will be suspended.
-        This is useful to avoid capturing uninteresting parts
-        of the input.
+        Only samples with enable high will be captured.
     trigger: Signal(), input
         A strobe that determines when we should start sampling.
     capturing: Signal(), output
@@ -896,8 +888,8 @@ class AsyncSerialILA(Elaboratable):
         are allowed if this number is >= 2.
 
     with_enable: bool
-        This provides an 'enable' signal which freezes the ILA whenever that signal
-        goes low.
+        This provides an 'enable' signal.
+        Only samples with enable high will be captured.
     """
 
     def __init__(self, *, signals, sample_depth, divisor, **kwargs):
