@@ -1,27 +1,25 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Tue Nov 16 18:43:29 2021
+[*] Mon Nov 22 22:39:33 2021
 [*]
 [dumpfile] "test_IntegratedLogicAnalyzerPretriggerTest_test_sampling.vcd"
-[dumpfile_mtime] "Tue Nov 16 18:43:08 2021"
-[dumpfile_size] 41965
+[dumpfile_mtime] "Mon Nov 22 22:36:44 2021"
+[dumpfile_size] 42905
 [savefile] "test/ila-pretrigger.gtkw"
-[timestart] 171250
+[timestart] 82280
 [size] 3828 2090
 [pos] -1 -1
-*-14.000000 36940 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-14.000000 645090 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] top.
 [sst_width] 575
-[signals_width] 491
+[signals_width] 454
 [sst_expanded] 1
-[sst_vpaned_height] 658
+[sst_vpaned_height] 972
 @28
 top.clk
 @200
 -Inputs
 @28
-[color] 3
-top.enable
 [color] 3
 top.trigger
 @c00022
@@ -35,23 +33,40 @@ top.pretrigger_samples.input_b[29:0]
 top.pretrigger_samples.input_a
 @1401200
 -group_end
+@29
+[color] 3
+top.pretrigger_enable.enable
 @200
 -ILA
 @28
 top.ila_fsm_state
 @22
-top.delayed_inputs[31:0]
+top.synced_inputs[31:0]
 @28
+top.synced_enable
+@200
+-Pretrigger FIFO
+@22
+top.pretrigger_fill_counter[3:0]
+@28
+top.pretrigger_filled
+top.pretrigger_fifo.w_en
+@22
+top.pretrigger_fifo.w_data[32:0]
+top.pretrigger_fifo.w_level[3:0]
+top.pretrigger_fifo.r_data[32:0]
+@28
+top.pretrigger_fifo.r_en
 top.delayed_enable
 @22
+top.delayed_inputs[31:0]
 top.ila_buffer_w_addr[4:0]
 top.ila_buffer_w_data[31:0]
 @200
 -Outputs
-@23
+@22
 [color] 3
 top.ila_buffer_r_addr[4:0]
-@22
 [color] 2
 top.ila_buffer_r_data[31:0]
 @28

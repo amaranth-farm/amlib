@@ -17,7 +17,7 @@ import subprocess
 
 from abc             import ABCMeta, abstractmethod
 
-from nmigen          import Signal, Module, Cat, Elaboratable, Memory, DomainRenamer
+from nmigen          import Signal, Module, Cat, Elaboratable, Memory, DomainRenamer, Mux
 from nmigen.hdl.ast  import Rose
 from nmigen.lib.cdc  import FFSynchronizer
 from nmigen.lib.fifo import SyncFIFOBuffered, AsyncFIFOBuffered
@@ -143,24 +143,41 @@ class IntegratedLogicAnalyzer(Elaboratable):
                     m.d.comb += delayed_enable.eq(synced_enable)
             else: # samples_pretrigger >= 2
                 capture_fifo_width = self.sample_width
-                if self.with_enable:
+                if with_enable:
                     capture_fifo_width += 1
 
+                pretrigger_fill_counter = Signal(range(self.samples_pretrigger * 2))
+                pretrigger_filled       = Signal()
+                m.d.comb += pretrigger_filled.eq(pretrigger_fill_counter >= (self.samples_pretrigger - 1))
+
+                # fill up pretrigger FIFO with the number of pretrigger samples
+                with m.If(synced_enable & ~pretrigger_filled):
+                    m.d.sync += pretrigger_fill_counter.eq(pretrigger_fill_counter + 1)
+
                 m.submodules.pretrigger_fifo = pretrigger_fifo =  \
-                    DomainRenamer(self.domain)(SyncFIFOBuffered(width=capture_fifo_width, depth=self.samples_pretrigger))
+                    DomainRenamer(self.domain)(SyncFIFOBuffered(width=capture_fifo_width, depth=self.samples_pretrigger + 1))
+
                 m.d.comb += [
                     pretrigger_fifo.w_data.eq(synced_inputs),
-                    delayed_inputs.eq(pretrigger_fifo.r_data),
-                    pretrigger_fifo.w_en.eq(1),
+                    # We only want to capture enabled samples
+                    # in the pretrigger period.
+                    # Since we also capture the enable signal,
+                    # we capture unconditionally after the pretrigger FIFO
+                    # has been filled
+                    pretrigger_fifo.w_en.eq(Mux(pretrigger_filled, 1, synced_enable)),
                     # buffer the specified number of pretrigger samples
-                    pretrigger_fifo.r_en.eq(pretrigger_fifo.level == (pretrigger_fifo.depth - 1)),
+                    pretrigger_fifo.r_en.eq(pretrigger_filled),
+
+                    delayed_inputs.eq(pretrigger_fifo.r_data),
                 ]
+
                 if with_enable:
                     delayed_enable = Signal()
                     m.d.comb += [
                         pretrigger_fifo.w_data[-1].eq(synced_enable),
                         delayed_enable.eq(pretrigger_fifo.r_data[-1]),
                     ]
+
         else:
             delayed_inputs = Signal.like(self.inputs)
             m.d.sync += delayed_inputs.eq(self.inputs)
@@ -201,7 +218,6 @@ class IntegratedLogicAnalyzer(Elaboratable):
                     # Prepare to capture the first sample
                     m.d.sync += [
                         write_position .eq(0),
-
                         self.complete  .eq(0),
                     ]
 
@@ -209,14 +225,13 @@ class IntegratedLogicAnalyzer(Elaboratable):
                 enabled = delayed_enable if with_enable else 1
                 m.d.comb += sampling.eq(enabled)
 
-                with m.If(enabled):
+                with m.If(sampling):
                     m.d.sync += write_position .eq(write_position + 1)
 
                     # If this is the last sample, we're done. Finish up.
                     with m.If(write_position == (self.sample_depth - 1)):
+                        m.d.sync += self.complete.eq(1)
                         m.next = "IDLE"
-
-                        m.d.sync += self.complete .eq(1)
 
         # Convert our sync domain to the domain requested by the user, if necessary.
         if self.domain != "sync":
@@ -329,6 +344,8 @@ class IntegratedLogicAnalyzerBasicTest(IntegratedLogicAnalyzerTest):
 
 
 class IntegratedLogicAnalyzerPretriggerTest(IntegratedLogicAnalyzerTest):
+    PRETRIGGER_SAMPLES = 8
+
     def instantiate_dut(self):
         self.input_a = Signal()
         self.input_b = Signal(30)
@@ -337,7 +354,7 @@ class IntegratedLogicAnalyzerPretriggerTest(IntegratedLogicAnalyzerTest):
         return IntegratedLogicAnalyzer(
             signals=[self.input_a, self.input_b, self.input_c],
             sample_depth = 32,
-            samples_pretrigger=8,
+            samples_pretrigger=self.PRETRIGGER_SAMPLES,
             with_enable=True
         )
 
@@ -358,7 +375,7 @@ class IntegratedLogicAnalyzerPretriggerTest(IntegratedLogicAnalyzerTest):
         self.assertEqual((yield self.dut.complete), 0)
 
         # Advance a bunch of cycles, and ensure we don't start sampling.
-        yield from self.advance_cycles(10)
+        yield from self.advance_cycles(2 + self.PRETRIGGER_SAMPLES)
         self.assertEqual((yield self.dut.sampling), 0)
 
         # Set a new piece of data for a couple of cycles.
@@ -391,19 +408,19 @@ class IntegratedLogicAnalyzerPretriggerTest(IntegratedLogicAnalyzerTest):
         self.assertEqual((yield self.dut.sampling), 0)
         self.assertEqual((yield self.dut.complete), 1)
 
-        for n in range(6):
+        for n in range(self.PRETRIGGER_SAMPLES - 2):
             yield from self.assert_sample_value(n, 0xDEADBEEF)
 
-        yield from self.assert_sample_value(6, 0x01234567)
-        yield from self.assert_sample_value(7, 0x89ABCDEF)
+        yield from self.assert_sample_value(self.PRETRIGGER_SAMPLES - 2, 0x01234567)
+        yield from self.assert_sample_value(self.PRETRIGGER_SAMPLES - 1, 0x89ABCDEF)
 
-        yield from self.assert_sample_value(8, sample_value(0))
-        yield from self.assert_sample_value(9, sample_value(1))
+        yield from self.assert_sample_value(self.PRETRIGGER_SAMPLES,     sample_value(0))
+        yield from self.assert_sample_value(self.PRETRIGGER_SAMPLES + 1, sample_value(1))
 
         # Validate the memory values after the first two samples
         # were captured are the even samples
         for i in range(1, 23):
-            yield from self.assert_sample_value(9 + i, sample_value(i * 2))
+            yield from self.assert_sample_value(self.PRETRIGGER_SAMPLES + 1 + i, sample_value(i * 2))
 
         # All of those reads shouldn't change our completeness.
         self.assertEqual((yield self.dut.sampling), 0)
