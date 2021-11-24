@@ -149,6 +149,8 @@ class IntegratedLogicAnalyzer(Elaboratable):
                 m.d.comb += pretrigger_filled.eq(pretrigger_fill_counter >= (self.samples_pretrigger - 1))
 
                 # fill up pretrigger FIFO with the number of pretrigger samples
+                if (not with_enable):
+                    synced_enable = 1
                 with m.If(synced_enable & ~pretrigger_filled):
                     m.d.sync += pretrigger_fill_counter.eq(pretrigger_fill_counter + 1)
 
