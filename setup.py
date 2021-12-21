@@ -11,22 +11,24 @@ def scm_version():
     }
 
 setup(
-    name="nmigen-library",
+    name="amaranth-library",
     use_scm_version=scm_version(),
     author="Hans Baier",
     author_email="hansfbaier@gmail.com",
-    description="standard library of utility cores for nmigen",
+    description="standard library of utility cores for amaranth HDL",
     license="Apache License 2.0",
     setup_requires=["wheel", "setuptools", "setuptools_scm"],
     install_requires=[
         "scipy",
-        "nmigen>=0.2,<0.4",
+        "amaranth>=0.2,<0.4",
+        "amaranth-soc",
+        "amaranth-stdio",
         "importlib_metadata; python_version<'3.8'",
     ],
     packages=find_packages(),
     project_urls={
-        "Source Code": "https://github.com/hansfbaier/nmigen-library",
-        "Bug Tracker": "https://github.com/hansfbaier/nmigen-library/issues",
+        "Source Code": "https://github.com/hansfbaier/amaranth-library",
+        "Bug Tracker": "https://github.com/hansfbaier/amaranth-library/issues",
     },
 )
 

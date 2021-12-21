@@ -5,7 +5,7 @@
 [dumpfile] "test_EdgeToPulseTest_test_basic.vcd"
 [dumpfile_mtime] "Thu Aug 19 02:57:34 2021"
 [dumpfile_size] 960
-[savefile] "/devel/HDL/src/nmigen-library/test/edgetopulse.gtkw"
+[savefile] "/devel/HDL/src/amaranth-library/test/edgetopulse.gtkw"
 [timestart] 0
 [size] 3828 2090
 [pos] -1 -1

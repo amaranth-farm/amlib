@@ -1,11 +1,11 @@
-# nmigen-library
-standard library of utility cores for nmigen
+# amaranth-library
+standard library of utility cores for amaranth HDL
 This library is in active development, therefore beware that things
 may break!
 
 This library contains:
 
-**nmigen_library.io**
+**amaranth_library.io**
 : Basic communication cores:
   * UART
   * I2C
@@ -14,14 +14,14 @@ This library contains:
   * MAX7219 SPI LED array driver core
   * neopixel (WS2812) RGB led strip driver core
 
-**nmigen_library.dsp**
+**amaranth_library.dsp**
 : Building blocks for digital signal processing:
   * fixed point FIR filter
   * fixed point IIR filter
   * filterbank
   * fractional resampler
 
-**nmigen_library.soc**
+**amaranth_library.soc**
 : Building blocks for SOC creation:
   * CPU
   * interrupts
@@ -31,7 +31,7 @@ This library contains:
   * SimpleSOC
   * peripherals
 
-**nmigen_library.stream**
+**amaranth_library.stream**
 * LiteX like streams
 * stream generators from ROM
 * stream to I2C
@@ -39,13 +39,13 @@ This library contains:
 * stream arbiter
 * stream to UART
 
-**nmigen_library.debug**
+**amaranth_library.debug**
 : Internal logic analyzer (ILA)
 
-**nmigen_library.test**
+**amaranth_library.test**
 : Convenience tools for automated testing of simulations, CRC
 
-**nmigen_library.utils**
+**amaranth_library.utils**
 : basic utility modules:
   * bit manipulation functions
   * one-hot-multiplexer

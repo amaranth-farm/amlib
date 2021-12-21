@@ -2,10 +2,10 @@
 [*] GTKWave Analyzer v3.3.109 (w)1999-2020 BSI
 [*] Thu Aug 19 03:44:29 2021
 [*]
-[dumpfile] "/devel/HDL/src/nmigen-library/test_DividingCounterTest_test_basic.vcd"
+[dumpfile] "/devel/HDL/src/amaranth-library/test_DividingCounterTest_test_basic.vcd"
 [dumpfile_mtime] "Thu Aug 19 03:26:56 2021"
 [dumpfile_size] 3113
-[savefile] "/devel/HDL/src/nmigen-library/test/dividing-counter.gtkw"
+[savefile] "/devel/HDL/src/amaranth-library/test/dividing-counter.gtkw"
 [timestart] 0
 [size] 3828 2090
 [pos] -1 -1

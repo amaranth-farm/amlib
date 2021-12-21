@@ -17,7 +17,7 @@ sys.path.insert(0, '/devel/HDL/adat/adat/')
 
 # -- Project information -----------------------------------------------------
 
-project = 'nMigen library'
+project = 'amaranth library'
 copyright = '2021, Hans Baier'
 author = 'Hans Baier'
 
@@ -54,5 +54,5 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 
-master_doc = 'nmigen_library'
+master_doc = 'amaranth_library'
 ''

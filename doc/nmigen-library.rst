@@ -1,4 +1,4 @@
-nMigen core library
+amaranth core library
 ===================
 
 Edge To Pulse Converter

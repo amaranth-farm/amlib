@@ -5,7 +5,7 @@
 [dumpfile] "test_OutputShiftRegisterTest_test_basic.vcd"
 [dumpfile_mtime] "Thu Aug 19 04:08:49 2021"
 [dumpfile_size] 1367
-[savefile] "/devel/HDL/src/nmigen-library/test/shift-register-out.gtkw"
+[savefile] "/devel/HDL/src/amaranth-library/test/shift-register-out.gtkw"
 [timestart] 0
 [size] 3828 2090
 [pos] -1 -1
