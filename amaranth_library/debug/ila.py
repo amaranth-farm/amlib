@@ -1132,6 +1132,10 @@ class ILAFrontend(metaclass=ABCMeta):
             # Zoom out quite a bit. We want to start with the big picture
             gtkw.zoom_markers(zoom=-11.0)
 
+            # create enough space in the signal names pane to have the signal
+            # values visible
+            gtkw.signals_width(500)
+
             # Add each of our signals to the file.
             for signal in self.ila.signals:
                 gtkw.trace(f"ila.{signal.name}")
