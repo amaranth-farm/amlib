@@ -1,5 +1,5 @@
 # amaranth-library
-standard library of utility cores for amaranth HDL.
+library of utility cores for amaranth HDL.
 
 This library is in active development, therefore beware that things
 may break!
