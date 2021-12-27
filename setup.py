@@ -11,7 +11,7 @@ def scm_version():
     }
 
 setup(
-    name="an-amaranth-lib",
+    name="amlib",
     use_scm_version=scm_version(),
     author="Hans Baier",
     author_email="hansfbaier@gmail.com",
@@ -27,8 +27,8 @@ setup(
     ],
     packages=find_packages(),
     project_urls={
-        "Source Code": "https://github.com/hansfbaier/an-amaranth-lib",
-        "Bug Tracker": "https://github.com/hansfbaier/an-amaranth-lib/issues",
+        "Source Code": "https://github.com/hansfbaier/amlib",
+        "Bug Tracker": "https://github.com/hansfbaier/amlib/issues",
     },
 )
 

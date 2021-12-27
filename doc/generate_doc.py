@@ -11,7 +11,7 @@ BUILD_DIR = os.path.join(DOCDIR, "build")
 
 TEST_JINJA_DICT = {
     "hdl_diagrams_path": "'{}'".format(DOCDIR),
-    "master_doc": "'an_amaranth_lib'",
+    "master_doc": "'amlib'",
     "custom_variables": "''"
 }
 

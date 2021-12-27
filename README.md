@@ -1,4 +1,4 @@
-# an-amaranth-lib
+# amlib
 Assorted library of utility cores for amaranth HDL.
 
 This library is in active development, therefore beware that things
@@ -6,7 +6,7 @@ may break!
 
 This library contains:
 
-**an_amaranth_lib.io**
+**amlib.io**
 : Basic communication cores:
   * UART
   * I2C
@@ -15,7 +15,7 @@ This library contains:
   * MAX7219 SPI LED array driver core
   * neopixel (WS2812) RGB led strip driver core
 
-**an_amaranth_lib.dsp**
+**amlib.dsp**
 : Building blocks for digital signal processing:
   * fixed point FIR filter
   * fixed point IIR filter
@@ -24,7 +24,7 @@ This library contains:
   * filterbank
   * fractional resampler
 
-**an_amaranth_lib.soc**
+**amlib.soc**
 : Building blocks for SOC creation:
   * CPU
   * interrupts
@@ -34,7 +34,7 @@ This library contains:
   * SimpleSOC
   * peripherals
 
-**an_amaranth_lib.stream**
+**amlib.stream**
 * LiteX like streams
 * stream generators from ROM
 * stream to I2C
@@ -42,13 +42,13 @@ This library contains:
 * stream arbiter
 * stream to UART
 
-**an_amaranth_lib.debug**
+**amlib.debug**
 : Internal logic analyzer (ILA)
 
-**an_amaranth_lib.test**
+**amlib.test**
 : Convenience tools for automated testing of simulations, CRC
 
-**an_amaranth_lib.utils**
+**amlib.utils**
 : basic utility modules:
   * bit manipulation functions
   * one-hot-multiplexer

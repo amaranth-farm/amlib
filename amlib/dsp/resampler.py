@@ -6,7 +6,7 @@
 import math
 from amaranth import *
 from amaranth.lib.fifo import SyncFIFO
-from an_amaranth_lib.stream import StreamInterface
+from amlib.stream import StreamInterface
 from .filterbank import Filterbank
 
 from ..test   import GatewareTestCase, sync_test_case
