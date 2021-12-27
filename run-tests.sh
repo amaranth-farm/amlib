@@ -13,6 +13,8 @@ python3 -m unittest amlib.io.i2s.I2SLoopbackTest
 
 python3 -m unittest amlib.dsp.fixedpointfirfilter.FixedPointFIRFilterTest
 python3 -m unittest amlib.dsp.fixedpointiirfilter.FixedPointIIRFilterTest
+python3 -m unittest amlib.dsp.fixedpointhbfilter.FixedPointHBFilterTest
+python3 -m unittest amlib.dsp.fixedpointcicfilter.FixedPointCICFilterTest
 python3 -m unittest amlib.dsp.resampler.ResamplerTestFIR
 python3 -m unittest amlib.dsp.resampler.ResamplerTestIIR
 
