@@ -54,5 +54,5 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 
-master_doc = 'amaranth_library'
+master_doc = 'an_amaranth_lib'
 ''

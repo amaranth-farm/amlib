@@ -13,8 +13,6 @@ from amaranth.build    import Platform
 from amaranth.hdl.ast  import Rose, Fell
 from amaranth.hdl.rec  import DIR_FANIN, DIR_FANOUT
 
-from amaranth_library.utils import clockdivider
-
 from ..test   import GatewareTestCase, sync_test_case
 from ..utils  import SimpleClockDivider
 
