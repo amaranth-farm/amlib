@@ -6,6 +6,7 @@
 from scipy import signal
 from amaranth import *
 from pprint import pformat
+import numpy as np
 
 from ..test   import GatewareTestCase, sync_test_case
 
@@ -17,23 +18,40 @@ class FixedPointFIRFilter(Elaboratable):
                  cutoff_freq:    int=20000,
                  filter_order:   int=24,
                  filter_type:    str='lowpass',
+                 weight:         list=None,
+                 mac_loop:       bool=False,
                  verbose:        bool=True) -> None:
 
         self.enable_in  = Signal()
         self.signal_in  = Signal(signed(bitwidth))
         self.signal_out = Signal(signed(bitwidth))
 
-        cutoff = cutoff_freq / samplerate
-        taps = signal.firwin(filter_order, cutoff, fs=samplerate, pass_zero=filter_type, window='hamming')
-
+        if type(cutoff_freq) == int:
+            cutoff = cutoff_freq / samplerate
+            taps = signal.firwin(filter_order, cutoff, fs=samplerate, pass_zero=filter_type, window='hamming')
+        elif type(cutoff_freq) == list and len(cutoff_freq) == 2:
+            Fs = samplerate
+            Fpb = cutoff_freq[0]
+            Fsb = cutoff_freq[1]
+            bands = np.array([0., Fpb/Fs, Fsb/Fs, .5])
+            pass_zero = filter_type == True or filter_type == 'lowpass'
+            desired = [1, 0] if pass_zero else [0, 1]
+            taps = signal.remez(filter_order, bands, desired, weight)
+        else:
+            raise TypeErr('cutoff_freq parameter must be int or list of start/stop band frequencies')
         # convert to fixed point representation
         self.bitwidth = bitwidth
         self.fraction_width = fraction_width
         assert bitwidth <= fraction_width, f"Bitwidth {bitwidth} must not exceed {fraction_width}"
         self.taps = taps_fp = [int(x * 2**fraction_width) for x in taps]
 
+        self.mac_loop = mac_loop
+
         if verbose:
-            print(f"{filter_order}-order windowed FIR with cutoff: {cutoff * samplerate}")
+            if type(cutoff_freq) == int:
+                print(f"{filter_order}-order windowed FIR with cutoff: {cutoff * samplerate}")
+            else:
+                print(f"{filter_order}-order FIR with start/stop band: {cutoff_freq} weight: {weight}")
             print(f"taps: {pformat(taps)}")
             print(f"taps ({bitwidth}.{fraction_width} fixed point): {taps_fp}\n")
 
@@ -56,7 +74,7 @@ class FixedPointFIRFilter(Elaboratable):
 
         n = len(self.taps)
         width = self.bitwidth + self.fraction_width
-        taps = [Const(n, signed(width)) for n in self.taps]
+        taps = Array(Const(n, signed(width)) for n in self.taps)
 
         # we use the array indices flipped, ascending from zero
         # so x[0] is x_n, x[1] is x_n-
@@ -64,8 +82,45 @@ class FixedPointFIRFilter(Elaboratable):
         # in other words: higher indices are past values, 0 is most recent
         x = Array(Signal(signed(width), name=f"x{i}") for i in range(n))
 
-        m.d.comb += self.signal_out.eq(
-              sum([((x[i] * taps[i]) >> self.fraction_width) for i in range(n)]))
+        if self.mac_loop:
+            ix = Signal(range(n + 1))
+            madd = Signal(signed(self.bitwidth))
+            a = Signal(signed(self.bitwidth))
+            b = Signal(signed(self.bitwidth))
+
+            with m.FSM(reset="IDLE"):
+                with m.State("IDLE"):
+                    with m.If(self.enable_in):
+                        m.d.sync += [
+                            ix.eq(0),
+                            madd.eq(0)
+                        ]
+                        m.next = "LOAD"
+
+                with m.State("LOAD"):
+                    with m.If(ix == n):
+                        m.next = "OUTPUT"
+                    with m.Else():
+                        m.d.sync += [
+                            a.eq(x[ix]),
+                            b.eq(taps[ix])
+                        ]
+                        m.next = "MAC"
+
+                with m.State("MAC"):
+                    m.d.sync += [
+                        madd.eq(madd + ((a * b) >> self.fraction_width)),
+                        ix.eq(ix + 1)
+                    ]
+                    m.next = "LOAD"
+
+                with m.State("OUTPUT"):
+                    m.d.sync += self.signal_out.eq(madd)
+                    m.next = "IDLE"
+
+        else:
+            m.d.comb += self.signal_out.eq(
+                sum([((x[i] * taps[i]) >> self.fraction_width) for i in range(n)]))
 
         with m.If(self.enable_in):
             m.d.sync += [x[i + 1].eq(x[i]) for i in range(n - 1)]
