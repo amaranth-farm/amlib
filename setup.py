@@ -11,11 +11,11 @@ def scm_version():
     }
 
 setup(
-    name="amaranth-library",
+    name="unofficial-amaranth-library",
     use_scm_version=scm_version(),
     author="Hans Baier",
     author_email="hansfbaier@gmail.com",
-    description="standard library of utility cores for amaranth HDL",
+    description="library of utility cores for amaranth HDL",
     license="Apache License 2.0",
     setup_requires=["wheel", "setuptools", "setuptools_scm"],
     install_requires=[
@@ -27,8 +27,8 @@ setup(
     ],
     packages=find_packages(),
     project_urls={
-        "Source Code": "https://github.com/hansfbaier/amaranth-library",
-        "Bug Tracker": "https://github.com/hansfbaier/amaranth-library/issues",
+        "Source Code": "https://github.com/hansfbaier/unofficial-amaranth-library",
+        "Bug Tracker": "https://github.com/hansfbaier/unofficial-amaranth-library/issues",
     },
 )
 
