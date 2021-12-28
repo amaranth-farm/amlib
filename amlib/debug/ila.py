@@ -1197,5 +1197,11 @@ class AsyncSerialILAFrontend(ILAFrontend):
         total_to_read      = self.ila.sample_depth * sample_width_bytes
 
         # Fetch all of our samples from the given device.
-        all_samples = self._port.read(total_to_read)
+        # TODO: figure out why the bytes to read sometimes
+        # are greater than the total.
+        # in that case we would get and Overflow error.
+        # If we make instead the bytes to read larger than
+        # the actual file the read will timeout but still
+        # return a correct, full trace
+        all_samples = self._port.read(2 * total_to_read)
         return list(self._split_samples(all_samples))
