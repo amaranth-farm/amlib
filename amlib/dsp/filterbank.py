@@ -3,8 +3,8 @@
 # Copyright (c) 2021 Hans Baier <hansfbaier@gmail.com>
 # SPDX-License-Identifier: CERN-OHL-W-2.0
 #
-from resampler.fixedpointiirfilter import FixedPointIIRFilter
-from resampler.fixedpointfirfilter import FixedPointFIRFilter
+from .fixedpointiirfilter import FixedPointIIRFilter
+from .fixedpointfirfilter import FixedPointFIRFilter
 from amaranth import *
 
 class Filterbank(Elaboratable):
