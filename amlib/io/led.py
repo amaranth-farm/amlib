@@ -6,7 +6,6 @@ from enum import IntEnum
 
 from amaranth import *
 from amaranth.build import Platform
-from amaranth.compat.fhdl.structure import Repl
 
 from ..test   import GatewareTestCase, sync_test_case
 
