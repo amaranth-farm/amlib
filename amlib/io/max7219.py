@@ -301,7 +301,7 @@ class NumberToBitBarTest(GatewareTestCase):
     FRAGMENT_ARGUMENTS = dict(minvalue_in=MIN, maxvalue_in=MAX, bitwidth_out=8, debug=False)
 
     @sync_test_case
-    def test_nibble(self):
+    def test_byte_range(self):
         dut = self.dut
         yield
 

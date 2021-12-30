@@ -1,0 +1,25 @@
+[*]
+[*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
+[*] Thu Dec 30 09:04:26 2021
+[*]
+[dumpfile] "test_NumberToBitBarTest_test_byte_range.vcd"
+[dumpfile_mtime] "Thu Dec 30 09:00:20 2021"
+[dumpfile_size] 9564
+[savefile] "test/number-to-bitbar.gtkw"
+[timestart] 0
+[size] 3828 2090
+[pos] -1 -1
+*-18.426188 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] bench.
+[sst_width] 347
+[signals_width] 255
+[sst_expanded] 1
+[sst_vpaned_height] 658
+@28
+bench.top.clk
+@8022
+bench.top.value_in[7:0]
+@29
+bench.top.bitbar_out[7:0]
+[pattern_trace] 1
+[pattern_trace] 0
