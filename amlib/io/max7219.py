@@ -232,3 +232,105 @@ class NumberToSevenSegmentHex(Elaboratable):
             ]
 
         return m
+
+class NumberToBitBar(Elaboratable):
+    """
+    This converts the range of an unsigned integer into bits representing a bar of
+    a bar chart:
+    * we map the minimal value and everything below to an empty bar
+    * and only the maxvalue to a full bar
+    * all values in between should be divided up linearly between one bit and  all
+      least significant bits until (all output bits - 1) set
+    """
+    def __init__(self, minvalue_in, maxvalue_in, bitwidth_out, debug=False) -> None:
+        # parameters
+        self._debug = debug
+        self.minvalue = minvalue_in
+        self.maxvalue = maxvalue_in
+        self.bitbar   = [Const(int(2**n - 1), bitwidth_out) for n in range(bitwidth_out + 1)]
+
+        # I/O
+        self.value_in   = Signal(range(maxvalue_in))
+        self.bitbar_out = Signal(bitwidth_out)
+
+    def elaborate(self, platform: Platform) -> Module:
+        m = Module()
+
+        debug = self._debug
+
+        bar_value = Signal(range(self.maxvalue - self.minvalue))
+
+        with m.If(self.value_in >= self.maxvalue):
+            m.d.sync += self.bitbar_out.eq(self.bitbar[-1])
+
+        with m.Elif(self.value_in <= self.minvalue):
+            m.d.sync += self.bitbar_out.eq(self.bitbar[0])
+
+        with m.Else():
+            m.d.comb += bar_value.eq(self.value_in - self.minvalue)
+
+            bar_bits = self.bitbar[1:-1]
+            if debug: print("barbits: " + str([bin(b.value) for b in bar_bits]))
+
+            range_max_values = [(self.maxvalue - self.minvalue) // (len(bar_bits) - 1) * i for i in range(1, len(bar_bits))]
+            rng_vals = [int(val) for val in range_max_values]
+            if debug: print("ranges:  " + str(rng_vals))
+
+            rng_vals_deltas = list(map(lambda x: x[0] - x[1], zip(rng_vals + [self.maxvalue], [0] + rng_vals)))
+            if debug: print("deltas:  " + str(rng_vals_deltas))
+
+            with m.If(bar_value < range_max_values[0]):
+                m.d.sync += self.bitbar_out.eq(bar_bits[0])
+
+            range_to_value = zip(range_max_values[1:], bar_bits[1:-1])
+
+            for (range_max, bitbar) in list(range_to_value):
+                if debug: print(f"range: {str(range_max)}, value: {bitbar}")
+                with m.Elif(bar_value < range_max):
+                    m.d.sync += self.bitbar_out.eq(bitbar)
+
+            with m.Else():
+                m.d.sync += self.bitbar_out.eq(bar_bits[-1])
+
+        return m
+
+class NumberToBitBarTest(GatewareTestCase):
+    MIN = 0x10
+    MAX = 0x82
+    FRAGMENT_UNDER_TEST = NumberToBitBar
+    FRAGMENT_ARGUMENTS = dict(minvalue_in=MIN, maxvalue_in=MAX, bitwidth_out=8, debug=False)
+
+    @sync_test_case
+    def test_nibble(self):
+        dut = self.dut
+        yield
+
+        step = (self.MAX - self.MIN) // (dut.bitbar_out.width - 2)
+        if dut._debug: print("step: " + str(step))
+
+        for i in range(self.MAX + 10):
+            yield dut.value_in.eq(i)
+            yield
+            yield
+            if True:
+                if i <= self.MIN:
+                    self.assertEqual((yield dut.bitbar_out), 0)
+                elif i < (self.MIN + step):
+                    self.assertEqual((yield dut.bitbar_out), 0b1)
+                elif i < (self.MIN + 2*step):
+                    self.assertEqual((yield dut.bitbar_out), 0b11)
+                elif i < (self.MIN + 3*step):
+                    self.assertEqual((yield dut.bitbar_out), 0b111)
+                elif i < (self.MIN + 4*step):
+                    self.assertEqual((yield dut.bitbar_out), 0b1111)
+                elif i < (self.MIN + 5*step):
+                    self.assertEqual((yield dut.bitbar_out), 0b11111)
+                elif i < (self.MIN + 6*step):
+                    self.assertEqual((yield dut.bitbar_out), 0b111111)
+                elif i < self.MAX:
+                    self.assertEqual((yield dut.bitbar_out), 0b1111111)
+                elif i >= self.MAX:
+                    self.assertEqual((yield dut.bitbar_out), 0b11111111)
+
+        yield
+        yield

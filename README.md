@@ -13,6 +13,7 @@ This library contains:
   * I2S (currently transmit only)
   * SPI
   * MAX7219 SPI LED array driver core
+  * seven segment driver, value to bitbar driver
   * neopixel (WS2812) RGB led strip driver core
 
 **amlib.dsp**
