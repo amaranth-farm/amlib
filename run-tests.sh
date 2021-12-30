@@ -11,7 +11,7 @@ python3 -m unittest amlib.io.spi.SPIRegisterInterfaceTest
 python3 -m unittest amlib.io.i2s.I2STransmitterTest
 python3 -m unittest amlib.io.i2s.I2SLoopbackTest
 python3 -m unittest amlib.io.max7219.SerialLEDArrayTest
-python3 -m unittest amlib.io.max7219.NumberToBitBarTest
+python3 -m unittest amlib.io.led.NumberToBitBarTest
 
 python3 -m unittest amlib.dsp.fixedpointfirfilter.FixedPointFIRFilterTest
 python3 -m unittest amlib.dsp.fixedpointiirfilter.FixedPointIIRFilterTest
