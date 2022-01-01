@@ -12,7 +12,7 @@ from enum import Enum
 from amaranth import *
 from amaranth.build    import Platform
 from amaranth.lib.cdc  import FFSynchronizer
-from amaranth.lib.fifo import SyncFIFO
+from amaranth.lib.fifo import SyncFIFOBuffered
 
 from ..stream import StreamInterface, connect_stream_to_fifo, connect_fifo_to_stream
 from ..utils  import rising_edge_detected, falling_edge_detected
@@ -142,7 +142,7 @@ class I2STransmitter(Elaboratable):
             right_channel.eq(~left_channel)
         ]
 
-        m.submodules.tx_fifo = tx_fifo = SyncFIFO(width=fifo_data_width + 1, depth=self._fifo_depth)
+        m.submodules.tx_fifo = tx_fifo = SyncFIFOBuffered(width=fifo_data_width + 1, depth=self._fifo_depth)
 
         # first marks left channel
         first_flag = Signal()
@@ -372,7 +372,7 @@ class I2SReceiver(Elaboratable):
             right_channel.eq(~left_channel)
         ]
 
-        m.submodules.rx_fifo = rx_fifo = SyncFIFO(width=fifo_data_width + 1, depth=self._fifo_depth)
+        m.submodules.rx_fifo = rx_fifo = SyncFIFOBuffered(width=fifo_data_width + 1, depth=self._fifo_depth)
 
         rx_buf       = Signal(fifo_data_width)
         rx_delay_cnt = Signal()
