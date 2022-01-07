@@ -73,7 +73,7 @@ class FixedPointHBFilter(Elaboratable):
 
         if self.mac_loop:
             ix = Signal(range(n + 2))
-            madd = Signal(signed(self.bitwidth))
+            madd = Signal(signed(self.bitwidth + 1))
             a = Signal(signed(self.bitwidth + 1))
             b = Signal(signed(self.bitwidth))
 
@@ -81,35 +81,31 @@ class FixedPointHBFilter(Elaboratable):
                 with m.State("IDLE"):
                     with m.If(self.strobe_in):
                         m.d.sync += [
-                            ix.eq(0),
-                            madd.eq(x[n//2] >> 1)
+                            ix.eq(2),
+                            a.eq(x[0] + x[n - 1]),
+                            b.eq(taps[0]),
+                            madd.eq(0)
                         ]
-                        m.next = "LOAD"
+                        m.next = "MAC"
 
-                with m.State("LOAD"):
+                with m.State("MAC"):
+                    m.d.sync += madd.eq(madd + ((a * b) >> self.fraction_width))
                     with m.If(ix > n//2):
                         m.next = "OUTPUT"
                     with m.Else():
                         m.d.sync += [
                             a.eq(x[ix] + x[n - 1 - ix]),
-                            b.eq(taps[ix])
+                            b.eq(taps[ix]),
+                            ix.eq(ix + 2)
                         ]
-                        m.next = "MAC"
-
-                with m.State("MAC"):
-                    m.d.sync += [
-                        madd.eq(madd + ((a * b) >> self.fraction_width)),
-                        ix.eq(ix + 2)
-                    ]
-                    m.next = "LOAD"
 
                 with m.State("OUTPUT"):
-                    m.d.sync += self.signal_out.eq(madd)
+                    m.d.sync += self.signal_out.eq(madd + (x[n//2] >> 1))
                     m.next = "IDLE"
 
         else:
             m.d.comb += self.signal_out.eq(
-                sum([(((x[2*i] + x[n - 1 - 2*i]) * taps[2*i]) >> self.fraction_width) for i in range(n//4)], (x[n//2] >> 1)))
+                sum([(((x[2*i] + x[n - 1 - 2*i]) * taps[2*i]) >> self.fraction_width) for i in range(n//4 + 1)], (x[n//2] >> 1)))
 
         with m.If(self.strobe_in):
             m.d.sync += x[0].eq(self.signal_in)
