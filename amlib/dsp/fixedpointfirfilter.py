@@ -38,7 +38,7 @@ class FixedPointFIRFilter(Elaboratable):
             desired = [1, 0] if pass_zero else [0, 1]
             taps = signal.remez(filter_order, bands, desired, weight)
         else:
-            raise TypeErr('cutoff_freq parameter must be int or list of start/stop band frequencies')
+            raise TypeError('cutoff_freq parameter must be int or list of start/stop band frequencies')
         # convert to fixed point representation
         self.bitwidth = bitwidth
         self.fraction_width = fraction_width
