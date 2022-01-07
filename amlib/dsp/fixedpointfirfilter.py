@@ -92,27 +92,23 @@ class FixedPointFIRFilter(Elaboratable):
                 with m.State("IDLE"):
                     with m.If(self.enable_in):
                         m.d.sync += [
-                            ix.eq(0),
+                            ix.eq(1),
+                            a.eq(x[0]),
+                            b.eq(taps[0]),
                             madd.eq(0)
                         ]
-                        m.next = "LOAD"
+                        m.next = "MAC"
 
-                with m.State("LOAD"):
+                with m.State("MAC"):
+                    m.d.sync += madd.eq(madd + ((a * b) >> self.fraction_width))
                     with m.If(ix == n):
                         m.next = "OUTPUT"
                     with m.Else():
                         m.d.sync += [
                             a.eq(x[ix]),
-                            b.eq(taps[ix])
+                            b.eq(taps[ix]),
+                            ix.eq(ix + 1)
                         ]
-                        m.next = "MAC"
-
-                with m.State("MAC"):
-                    m.d.sync += [
-                        madd.eq(madd + ((a * b) >> self.fraction_width)),
-                        ix.eq(ix + 1)
-                    ]
-                    m.next = "LOAD"
 
                 with m.State("OUTPUT"):
                     m.d.sync += self.signal_out.eq(madd)
