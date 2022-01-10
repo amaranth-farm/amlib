@@ -122,25 +122,40 @@ class StreamInterface(Record):
         return super().__getattr__(name)
 
 
-def connect_fifo_to_stream(fifo: FIFOInterface, stream: StreamInterface) -> None:
+def connect_fifo_to_stream(fifo: FIFOInterface, stream: StreamInterface, firstBit: int=None, lastBit: int=None) -> None:
     """Connects the output of the FIFO to the of the stream. Data flows from the fifo the stream.
        This function does not connect first/last signals
     """
 
-    return [
+    result = [
         stream.valid.eq(fifo.r_rdy),
         fifo.r_en.eq(stream.ready),
         stream.payload.eq(fifo.r_data),
     ]
 
+    if firstBit:
+        result.append(stream.first.eq(fifo.r_data[firstBit]))
+    if lastBit:
+        result.append(stream.last.eq(fifo.r_data[lastBit]))
 
-def connect_stream_to_fifo(stream: StreamInterface, fifo: FIFOInterface) -> None:
+    return result
+
+
+
+def connect_stream_to_fifo(stream: StreamInterface, fifo: FIFOInterface, firstBit: int=None, lastBit: int=None) -> None:
     """Connects the stream to the input of the FIFO. Data flows from the stream to the FIFO.
        This function does not connect first/last signals
     """
 
-    return [
+    result = [
         fifo.w_en.eq(stream.valid),
         stream.ready.eq(fifo.w_rdy),
         fifo.w_data.eq(stream.payload),
     ]
+
+    if firstBit:
+        result.append(fifo.w_data[firstBit].eq(stream.first))
+    if lastBit:
+        result.append(fifo.w_data[lastBit].eq(stream.last))
+
+    return result
