@@ -124,7 +124,8 @@ class StreamInterface(Record):
 
 def connect_fifo_to_stream(fifo: FIFOInterface, stream: StreamInterface, firstBit: int=None, lastBit: int=None) -> None:
     """Connects the output of the FIFO to the of the stream. Data flows from the fifo the stream.
-       This function does not connect first/last signals
+       It is assumed the payload occupies the lowest significant bits
+       This function connects first/last signals if their bit numbers are given
     """
 
     result = [
@@ -144,7 +145,8 @@ def connect_fifo_to_stream(fifo: FIFOInterface, stream: StreamInterface, firstBi
 
 def connect_stream_to_fifo(stream: StreamInterface, fifo: FIFOInterface, firstBit: int=None, lastBit: int=None) -> None:
     """Connects the stream to the input of the FIFO. Data flows from the stream to the FIFO.
-       This function does not connect first/last signals
+       It is assumed the payload occupies the lowest significant bits
+       This function connects first/last signals if their bit numbers are given
     """
 
     result = [
