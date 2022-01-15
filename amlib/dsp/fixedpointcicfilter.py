@@ -5,7 +5,7 @@
 
 from amaranth import *
 from amaranth import Signal, Module, Elaboratable
-from math import log2, floor
+from math import log2, ceil
 
 from ..test   import GatewareTestCase, sync_test_case
 
@@ -48,7 +48,7 @@ class FixedPointCICFilter(Elaboratable):
         self.stage = filter_stage
         self.decimation = decimation
         self.bitwidth = bitwidth
-        self.delay_width = max(1 + floor(filter_stage*log2(decimation)), bitwidth)
+        self.delay_width = max(1 + ceil(filter_stage*log2(decimation)), bitwidth)
 
         if verbose:
             print(f"{filter_stage}-stage CIC with decimation: {decimation}")
