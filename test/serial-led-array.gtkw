@@ -2,10 +2,10 @@
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
 [*] Mon Oct 18 20:41:51 2021
 [*]
-[dumpfile] "/devel/HDL/src/amaranth-library/test_SerialLEDArrayTest_test_spi_interface.vcd"
+[dumpfile] "test_SerialLEDArrayTest_test_spi_interface.vcd"
 [dumpfile_mtime] "Mon Oct 18 20:41:30 2021"
 [dumpfile_size] 338477
-[savefile] "/devel/HDL/src/amaranth-library/test/serial-led-array.gtkw"
+[savefile] "test/serial-led-array.gtkw"
 [timestart] 0
 [size] 3828 2090
 [pos] -1 -1
