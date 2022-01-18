@@ -5,7 +5,7 @@
 [dumpfile] "test_InputShiftRegisterTest_test_basic.vcd"
 [dumpfile_mtime] "Thu Aug 19 03:53:11 2021"
 [dumpfile_size] 2437
-[savefile] "/devel/HDL/src/amaranth-library/test/shift-register-in.gtkw"
+[savefile] "test/shift-register-in.gtkw"
 [timestart] 0
 [size] 3828 2090
 [pos] -1 -1
