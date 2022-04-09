@@ -74,6 +74,8 @@ class StereoConvolutionMAC(Elaboratable):
 
         # in order to process more taps than we have clock cycles per sample we will run parallel calculations.
         # The number of parallel calculations per channel is defined by the "slices" variable
+        # E.g. 60MHz sync domain and 48kHz samplerate leads to 1250 cycles available for calculations per audio sample.
+        # In order to process an IR with 4096 taps you need 4 parallel computations (slices) in order to do real-time dsp.
         self._slices = math.ceil(self._tapcount / (clockfrequency / samplerate))  # 4
         self._size_of_slizes = self._bitwidth * self._slices #how many bits per slice
         self._samples_per_slice = self._tapcount // self._slices #how many samples per slice
@@ -303,6 +305,8 @@ class StereoConvolutionMACTest(GatewareTestCase):
     tapcount = 32
     bitwidth = 24
     samplerate = 48000
+    # For testing it is unrealistic to process 4000 taps. We specify a slow clockfrequency of 384kHz (48000*32/4) in order to
+    # test the calculation for 4 slices. Testing for a single slice would not uncover any parallel-processing issues in the code.
     clockfrequency = samplerate * tapcount / 4 # we want to test for 4 slices
 
     #some test IR-data
