@@ -24,6 +24,7 @@ setup(
         "amaranth-soc",
         "amaranth-stdio",
         "importlib_metadata; python_version<'3.8'",
+        "numpy",
     ],
     packages=find_packages(),
     project_urls={
