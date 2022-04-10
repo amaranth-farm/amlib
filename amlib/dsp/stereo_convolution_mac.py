@@ -310,8 +310,6 @@ class StereoConvolutionMACTest(GatewareTestCase):
     clockfrequency = samplerate * tapcount / 4 # we want to test for 4 slices
 
     #some test IR-data
-    #tapdata1 = [5033163, 4194303, 2097151,  838859] # [0.6, 0.5, 0.25, 0.1] * 2 ** (bitwidth-1)-1
-    #tapdata2 = [419429, 209714,  83885, 167771] #[0.05, 0.025, 0.01, 0.02] * 2 ** (bitwidth-1)-1
     tapdata1 = [
         8388607, 8388607, -8388608, 7805659, -777420, -2651895, 1181562, -3751702,
         2024355, -1085865, 1194588, -341596, -138844, -133784, -204981, 33373,
@@ -380,9 +378,6 @@ class StereoConvolutionMACTest(GatewareTestCase):
     @sync_test_case
     def test_fir(self):
         dut = self.dut
-        max = int(2**(self.bitwidth-1) - 1)
-        min = -max
-
         testdata_raw = [[812420, 187705], [800807, 152271], [788403, 109422], [789994, 65769], [773819, 12803],
                     [747336, -40589], [744825, -84371], [729641, -141286], [706089, -190230], [687227, -238741],
                     [674577, -293106], [679382, -354421], [673939, -404084], [670470, -448995], [698245, -493213],
