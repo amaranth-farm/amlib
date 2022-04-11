@@ -12,10 +12,7 @@ import numpy as np
 import math
 from enum import Enum
 
-class ConvolutionMode(Enum):
-    CROSSFEED = 1
-    STEREO = 2
-    MONO = 3
+from .convolutionmode 	import ConvolutionMode
 
 class StereoConvolutionMAC(Elaboratable):
     """A stereo convolution module which uses the MAC (Multiply-Accumulate) algorithm
