@@ -15,6 +15,7 @@ This library contains:
   * MAX7219 SPI LED array driver core
   * seven segment driver, value to bitbar driver
   * neopixel (WS2812) RGB led strip driver core
+  * Debouncer for debouncing button inputs
 
 **amlib.dsp**
 : Building blocks for digital signal processing:
@@ -24,6 +25,12 @@ This library contains:
   * fixed point halfband filter
   * filterbank
   * fractional resampler
+
+**amlib.dsp.convolution**
+: Convolution cores:
+  * mac: A convolution core which uses parallel multiply-accumulate (MAC) calculation. 
+    This introduces a latency of only one sample. For longer impulse responses it will consume several hardware
+    multipliers for calculations.
 
 **amlib.soc**
 : Building blocks for SOC creation:
