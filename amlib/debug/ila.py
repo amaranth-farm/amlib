@@ -1009,12 +1009,20 @@ class AsyncSerialILA(Elaboratable):
 
         return m
 
+class ILASignal:
+    def __init__(self, signal) -> None:
+        self.name = signal.name
+        self.len  = len(signal)
+
+    def __len__(self):
+        return self.len
+
 class ILACoreParameters:
     """ This Class is needed to pickle the core parameters of an ILA.
         This makes it possible to run the frontend in a different python script
     """
     def __init__(self, ila) -> None:
-        self.signals          = ila.signals
+        self.signals          = [ILASignal(s) for s in ila.signals]
         self.sample_width     = ila.sample_width
         self.sample_depth     = ila.sample_depth
         self.sample_rate      = ila.sample_rate
