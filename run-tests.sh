@@ -4,6 +4,7 @@ export GENERATE_VCDS=1
 
 python3 -m unittest amlib.debug.ila.IntegratedLogicAnalyzerBasicTest
 python3 -m unittest amlib.debug.ila.IntegratedLogicAnalyzerPretriggerTest
+python3 -m unittest amlib.debug.ila.StreamILATest
 
 python3 -m unittest amlib.io.spi.SPIControllerInterfaceTest
 python3 -m unittest amlib.io.spi.SPIDeviceInterfaceTest
