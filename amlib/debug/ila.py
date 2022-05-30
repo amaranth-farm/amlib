@@ -1012,6 +1012,7 @@ class AsyncSerialILA(Elaboratable):
 class ILASignal:
     def __init__(self, signal) -> None:
         self.name = signal.name
+        self.signed = signal.shape().signed
         self.len  = len(signal)
 
     def __len__(self):
@@ -1035,8 +1036,11 @@ class ILACoreParameters:
 
     @staticmethod
     def unpickle(filename="ila.P"):
-        ila_core_parameters = pickle.load(open(filename, "rb"))
-        return ILACoreParameters(ila_core_parameters)
+        ila = pickle.load(open(filename, "rb"))
+        from amaranth.hdl.ast import Shape
+        signals = [Signal(shape=Shape(s.len, s.signed), name=s.name) for s in ila.signals]
+        ila.signals = signals
+        return ila
 
 class ILAFrontend(metaclass=ABCMeta):
     """ Class that communicates with an ILA module and emits useful output. """
@@ -1142,6 +1146,7 @@ class ILAFrontend(metaclass=ABCMeta):
 
             # Create named values for each of our signals.
             for signal in self.ila.signals:
+                print(f"register signal {signal.name} with size {len(signal)}, signed: {signal.signed}")
                 signals[signal.name] = writer.register_var('ila', signal.name, 'integer', size=len(signal))
 
             # Dump the each of our samples into the VCD.
