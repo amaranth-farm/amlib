@@ -79,7 +79,8 @@ class SimpleSoC(CPUSoC, Elaboratable):
 
         # Create our bus decoder and set up our memory map.
         self.bus_decoder = wishbone.Decoder(addr_width=30, data_width=32, granularity=8, features={"cti", "bte"})
-        self.memory_map  = self.bus_decoder.bus.memory_map
+        self.memory_map = self.bus_decoder.bus.memory_map
+        self.bus_decoder.bus._map._frozen = False
 
     def add_rom(self, data, size, addr=0, is_main_rom=True):
         """ Creates a simple ROM and adds it to the design.
@@ -252,16 +253,15 @@ class SimpleSoC(CPUSoC, Elaboratable):
             resources = peripheral.all_resources()
 
             # ... find the peripheral's resources...
-            for resource, (register_offset, register_end_offset, _local_granularity) in resources:
-
+            for resource in resources:
                 if self._build_bios and omit_bios_mem:
                     # If we're omitting bios resources, skip the BIOS ram/rom.
                     if (self.ram._mem is resource) or (self.rom._mem is resource):
                         continue
 
                 # ... and extract the peripheral's range/vitals...
-                size = register_end_offset - register_offset
-                yield resource, peripheral_start + register_offset, size
+                size = resource.end - resource.start
+                yield resource, peripheral_start + resource.start, size
 
     def build(self, name=None, build_dir="build"):
         """ Builds any internal artifacts necessary to create our CPU.
@@ -294,9 +294,9 @@ class SimpleSoC(CPUSoC, Elaboratable):
         memory_map = self.bus_decoder.bus.memory_map
 
         # Search our memory map for the target peripheral.
-        for peripheral, (start, end, _granularity) in memory_map.all_resources():
-            if peripheral is target_peripheral:
-                return start, (end - start)
+        for resource in memory_map.all_resources():
+            if resource.resource is target_peripheral:
+                return resource.start, (resource.end - resource.start)
 
         return None, None
 
@@ -423,27 +423,29 @@ class SimpleSoC(CPUSoC, Elaboratable):
         emit("//")
         emit("// Peripherals")
         emit("//")
-        for resource, address, size in self.resources():
-
+        for resource in self.memory_map.all_resources():
             # Always generate a macro for the resource's ADDRESS and size.
-            name = resource.name
+            name = "_".join([i for i in resource.name])
+            address = resource.start
+            size = resource.end - resource.start
+
             emit(f"#define {name.upper()}_ADDRESS (0x{address:08x}U)")
             emit(f"#define {name.upper()}_SIZE ({size})")
 
             # If we have information on how to access this resource, generate convenience
             # macros for reading and writing it.
-            if hasattr(resource, 'access'):
+            if hasattr(resource.resource, 'access'):
                 c_type = types_for_size[size]
 
                 # Generate a read stub, if useful...
-                if resource.access.readable():
+                if resource.resource.access.readable():
                     emit(f"static inline {c_type} {name}_read(void) {{")
                     emit(f"    volatile {c_type} *reg = ({c_type} *){name.upper()}_ADDRESS;")
                     emit(f"    return *reg;")
                     emit(f"}}")
 
                 # ... and a write stub.
-                if resource.access.writable():
+                if resource.resource.access.writable():
                     emit(f"static inline void {name}_write({c_type} value) {{")
                     emit(f"    volatile {c_type} *reg = ({c_type} *){name.upper()}_ADDRESS;")
                     emit(f"    *reg = value;")
@@ -516,8 +518,8 @@ class SimpleSoC(CPUSoC, Elaboratable):
 
         # Resource addresses:
         logging.info("Physical address allocations:")
-        for peripheral, (start, end, _granularity) in self.memory_map.all_resources():
-            logging.info(f"    {start:08x}-{end:08x}: {peripheral}")
+        for resource in self.memory_map.all_resources():
+            logging.info(f"    {resource.start:08x}-{resource.end:08x}: {resource.name}")
         logging.info("")
 
         # IRQ numbers
