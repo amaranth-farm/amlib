@@ -16,7 +16,7 @@ from amaranth_soc              import wishbone
 from lambdasoc.soc.cpu       import CPUSoC
 from lambdasoc.cpu.minerva   import MinervaCPU
 from lambdasoc.periph.intc   import GenericInterruptController
-from lambdasoc.periph.serial import AsyncSerialPeripheral
+from lambdasoc.periph.serial import AsyncSerialPeripheral, AsyncSerial
 from lambdasoc.periph.sram   import SRAMPeripheral
 from lambdasoc.periph.timer  import TimerPeripheral
 
@@ -152,6 +152,51 @@ class SimpleSoC(CPUSoC, Elaboratable):
         """ Adds an automatically-connected Debug port to our SoC. """
         self._auto_debug = True
 
+    def add_bios_and_peripherals(self, uart_pins, sync_clk_freq=int(60e6), uart_baud_rate=115200, fixed_addresses=False):
+        """ Adds a simple BIOS that allows loading firmware, and the requisite peripherals.
+
+        Automatically adds the following peripherals:
+            self.uart      -- An AsyncSerialPeripheral used for serial I/O.
+            self.timer     -- A TimerPeripheral used for BIOS timing.
+            self.rom       -- A ROM memory used for the BIOS.
+            self.ram       -- The RAM used by the BIOS; not typically the program RAM.
+
+        Parameters:
+            uart_pins      -- The UARTResource to be used for UART communications; or an equivalent record.
+            uart_baud_rate -- The baud rate to be used by the BIOS' uart.
+        """
+
+        self._build_bios = True
+        self._uart_baud  = uart_baud_rate
+        self.sync_clk_freq = sync_clk_freq
+
+        # Add our RAM and ROM.
+        # Note that these names are from CPUSoC, and thus must not be changed.
+        #
+        # Here, we're using SRAMPeripherals instead of our more flexible ones,
+        # as that's what the lambdasoc BIOS expects. These are effectively internal.
+        #
+        addr = 0x0000_0000 if fixed_addresses else None
+        self.bootrom = SRAMPeripheral(size=0x4000, writable=False)
+        self.add_peripheral(self.bootrom, addr=addr)
+
+        addr = 0x0001_0000 if fixed_addresses else None
+        self.scratchpad = SRAMPeripheral(size=0x1000)
+        self.add_peripheral(self.scratchpad, addr=addr)
+
+        self.sdram = None
+        self.ethmac = None
+
+        # Add our UART and Timer.
+        # Again, names are fixed.
+        addr = 0x0002_0000 if fixed_addresses else None
+        self.timer = TimerPeripheral(width=32)
+        self.add_peripheral(self.timer, addr=addr)
+
+        addr = 0x0003_0000 if fixed_addresses else None
+        self.uart = AsyncSerialPeripheral(core=AsyncSerial(divisor=int(self.clk_freq // uart_baud_rate), pins=uart_pins))
+        self.add_peripheral(self.uart, addr=addr)
+
     def elaborate(self, platform):
         m = Module()
 
@@ -236,10 +281,11 @@ class SimpleSoC(CPUSoC, Elaboratable):
         # If we're building a BIOS, let our superclass build a BIOS for us.
         if self._build_bios:
             logging.info("Building SoC BIOS...")
-            super().build(name=name, build_dir=os.path.join(build_dir, 'soc'), do_build=True, do_init=True)
+            soc_dir = os.path.join(build_dir, 'soc')
+            from pathlib import Path
+            Path(os.path.join(soc_dir, "lambdasoc.soc.cpu", "bios", "3rdparty", "litex")).mkdir(parents=True, exist_ok=True)
+            super().build(name=name, build_dir=soc_dir, do_build=True, do_init=True)
             logging.info("BIOS build complete. Continuing with SoC build.")
-
-        self.log_resources()
 
     def _range_for_peripheral(self, target_peripheral):
         """ Returns size information for the given peripheral.
