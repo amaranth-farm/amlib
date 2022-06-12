@@ -44,7 +44,7 @@ class SimpleSoC(CPUSoC, Elaboratable):
 
     BUS_ADDRESS_WIDTH = 30
 
-    def __init__(self, clock_frequency=int(60e6)):
+    def __init__(self, clock_frequency=int(60e6), build_bios=False):
         """
         Parameters:
             clock_frequency -- The frequency of our `sync` domain, in MHz.
@@ -63,7 +63,7 @@ class SimpleSoC(CPUSoC, Elaboratable):
 
         # By default, don't attach any debug hardware; or build a BIOS.
         self._auto_debug = False
-        self._build_bios = False
+        self._build_bios = build_bios
 
         #
         # Create our core hardware.
