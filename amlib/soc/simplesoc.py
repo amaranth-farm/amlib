@@ -152,47 +152,6 @@ class SimpleSoC(CPUSoC, Elaboratable):
         """ Adds an automatically-connected Debug port to our SoC. """
         self._auto_debug = True
 
-    def add_bios_and_peripherals(self, uart_pins, uart_baud_rate=115200, fixed_addresses=False):
-        """ Adds a simple BIOS that allows loading firmware, and the requisite peripherals.
-
-        Automatically adds the following peripherals:
-            self.uart      -- An AsyncSerialPeripheral used for serial I/O.
-            self.timer     -- A TimerPeripheral used for BIOS timing.
-            self.rom       -- A ROM memory used for the BIOS.
-            self.ram       -- The RAM used by the BIOS; not typically the program RAM.
-
-        Parameters:
-            uart_pins      -- The UARTResource to be used for UART communications; or an equivalent record.
-            uart_baud_rate -- The baud rate to be used by the BIOS' uart.
-        """
-
-        self._build_bios = True
-        self._uart_baud  = uart_baud_rate
-
-        # Add our RAM and ROM.
-        # Note that these names are from CPUSoC, and thus must not be changed.
-        #
-        # Here, we're using SRAMPeripherals instead of our more flexible ones,
-        # as that's what the lambdasoc BIOS expects. These are effectively internal.
-        #
-        addr = 0x0000_0000 if fixed_addresses else None
-        self.rom = SRAMPeripheral(size=0x4000, writable=False)
-        self.add_peripheral(self.rom, addr=addr)
-
-        addr = 0x0001_0000 if fixed_addresses else None
-        self.ram = SRAMPeripheral(size=0x1000)
-        self.add_peripheral(self.ram, addr=addr)
-
-        # Add our UART and Timer.
-        # Again, names are fixed.
-        addr = 0x0002_0000 if fixed_addresses else None
-        self.timer = TimerPeripheral(width=32)
-        self.add_peripheral(self.timer, addr=addr)
-
-        addr = 0x0003_0000 if fixed_addresses else None
-        self.uart = AsyncSerialPeripheral(divisor=int(self.clk_freq // uart_baud_rate), pins=uart_pins)
-        self.add_peripheral(self.uart, addr=addr)
-
     def elaborate(self, platform):
         m = Module()
 
