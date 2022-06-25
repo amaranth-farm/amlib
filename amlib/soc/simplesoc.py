@@ -44,7 +44,7 @@ class SimpleSoC(CPUSoC, Elaboratable):
 
     BUS_ADDRESS_WIDTH = 30
 
-    def __init__(self, clock_frequency=int(60e6), with_debug=False):
+    def __init__(self, clock_frequency=int(60e6), build_bios=False, with_debug=False):
         """
         Parameters:
             clock_frequency -- The frequency of our `sync` domain, in MHz.
