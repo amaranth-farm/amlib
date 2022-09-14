@@ -158,7 +158,7 @@ class ConstantStreamGenerator(Elaboratable):
             bytes_sent     = Signal(self._max_length_width)
             bytes_per_word = (self._data_width + 7) // 8
         else:
-            bytes_sent     = 0
+            bytes_sent     = Signal()
             bytes_per_word = 0
 
         # Track when we're on the first and last packet.
@@ -180,12 +180,13 @@ class ConstantStreamGenerator(Elaboratable):
         with m.Else():
             m.d.comb += start_position.eq(self.start_position)
 
-        # Output length field.
-        # Return our max length of the length of our data, whichever is less.
-        with m.If(self.max_length < self._data_length):
-            m.d.comb += self.output_length.eq(self.max_length)
-        with m.Else():
-            m.d.comb += self.output_length.eq(self._data_length)
+        if hasattr(self, "output_length"):
+            # Output length field.
+            # Return our max length of the length of our data, whichever is less.
+            with m.If(self.max_length < self._data_length):
+                m.d.comb += self.output_length.eq(self.max_length)
+            with m.Else():
+                m.d.comb += self.output_length.eq(self._data_length)
 
         # Controller.
         with m.FSM(domain=self._domain) as fsm:
