@@ -23,6 +23,7 @@ This library contains:
   * fixed point IIR filter
   * fixed point CIC filter
   * fixed point halfband filter
+  * fixed point FFT
   * filterbank
   * fractional resampler
 
