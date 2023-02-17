@@ -129,6 +129,8 @@ class SPIControllerInterface(Elaboratable):
 
         with m.FSM() as fsm:
             m.d.comb += sck.eq(Mux(fsm.ongoing("TRANSFER"), sck_divider.clock_out, self.clock_polarity))
+            cs_domain = m.d.comb if self.clock_phase == 1 else m.d.sync
+            cs_domain += cs.eq(Mux(fsm.ongoing("TRANSFER"), cs_active, cs_inactive))
 
             with m.State("IDLE"):
                 m.d.sync += sck_divider.clock_enable_in.eq(0)
@@ -141,10 +143,7 @@ class SPIControllerInterface(Elaboratable):
                     m.next = "TRANSFER"
 
             with m.State("TRANSFER"):
-                m.d.sync += cs.eq(cs_active)
-
                 with m.If(spi_device.word_complete):
-                    m.d.sync += cs.eq(cs_inactive)
                     m.next = "IDLE"
 
         return m
