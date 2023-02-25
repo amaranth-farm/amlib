@@ -324,7 +324,8 @@ class SPIDeviceInterface(Elaboratable):
             m.d.sync += [
                 current_tx   .eq(self.word_out),
                 bit_count    .eq(0),
-                is_first_bit .eq(1)
+                is_first_bit .eq(1),
+                self.spi.sdo .eq(0),
             ]
 
         return m
