@@ -12,6 +12,7 @@ from amaranth          import Signal, Module, Cat, Elaboratable, Record, Mux
 from amaranth.build    import Platform
 from amaranth.hdl.ast  import Rose, Fell
 from amaranth.hdl.rec  import DIR_FANIN, DIR_FANOUT
+from amaranth.lib.cdc  import FFSynchronizer
 
 from ..test   import GatewareTestCase, sync_test_case
 from ..utils  import SimpleClockDivider
@@ -51,7 +52,7 @@ class SPIControllerInterface(Elaboratable):
         I: start_transfer -- strobe that initiates the SPI transfer
     """
 
-    def __init__(self, *, word_size=8, divisor, clock_polarity=0, clock_phase=0, msb_first=True, cs_idles_high=False):
+    def __init__(self, *, word_size=8, divisor, clock_polarity=0, clock_phase=0, msb_first=True, cs_idles_high=False, skip_input_cdc=False):
         """
         Parameters:
             word_size      -- The size of each transmitted word, in bits.
@@ -60,6 +61,7 @@ class SPIControllerInterface(Elaboratable):
             clock_phase    -- The SPI-standard clock phase. 1 to capture on the leading edge, or 0 for on the trailing
             msb_first      -- If true, or not provided, data will be transmitted MSB first (standard).
             cs_idles_high  -- If provided, data will be captured when CS goes _low_, rather than high.
+            skip_input_cdc -- skips the CDC at the input signals
         """
 
         self.word_size      = word_size
@@ -68,6 +70,7 @@ class SPIControllerInterface(Elaboratable):
         self.clock_phase    = clock_phase
         self.msb_first      = msb_first
         self.cs_idles_high  = cs_idles_high
+        self.skip_input_cdc = skip_input_cdc
 
         #
         # I/O port.
@@ -100,7 +103,8 @@ class SPIControllerInterface(Elaboratable):
                                clock_polarity=self.clock_polarity,
                                clock_phase=self.clock_phase,
                                msb_first=self.msb_first,
-                               cs_idles_high=self.cs_idles_high)
+                               cs_idles_high=self.cs_idles_high,
+                               skip_input_cdc=self.skip_input_cdc)
 
         sck = Signal()
 
@@ -180,7 +184,7 @@ class SPIDeviceInterface(Elaboratable):
         I: word_out      -- the word to be loaded; latched in on next word_complete and while cs is low
     """
 
-    def __init__(self, *, word_size=8, clock_polarity=0, clock_phase=0, msb_first=True, cs_idles_high=False):
+    def __init__(self, *, word_size=8, clock_polarity=0, clock_phase=0, msb_first=True, cs_idles_high=False, skip_input_cdc=False):
         """
         Parameters:
             word_size      -- The size of each transmitted word, in bits.
@@ -188,6 +192,7 @@ class SPIDeviceInterface(Elaboratable):
             clock_phase    -- The SPI-standard clock phase. 0 to capture on the leading edge, or 1 for on the trailing
             msb_first      -- If true, or not provided, data will be transmitted MSB first (standard).
             cs_idles_high  -- If provided, data will be captured when CS goes _low_, rather than high.
+            skip_input_cdc -- skips the CDC at the input signals
         """
 
         self.word_size      = word_size
@@ -195,6 +200,7 @@ class SPIDeviceInterface(Elaboratable):
         self.clock_phase    = clock_phase
         self.msb_first      = msb_first
         self.cs_idles_high  = cs_idles_high
+        self.skip_input_cdc = skip_input_cdc
 
         #
         # I/O port.
@@ -217,7 +223,7 @@ class SPIDeviceInterface(Elaboratable):
             spi_resource.cs   .eq(self.spi_bus_out.cs if not self.cs_idles_high else ~self.spi_bus_out.cs),
         ]
 
-    def spi_edge_detectors(self, m):
+    def spi_edge_detectors(self, m, sck):
         """ Generates edge detectors for the sample and output clocks, based on the current SPI mode.
 
         Returns:
@@ -228,9 +234,9 @@ class SPIDeviceInterface(Elaboratable):
         # Select whether we're working with an inverted or un-inverted serial clock.
         serial_clock = Signal()
         if self.clock_polarity:
-            m.d.comb += serial_clock.eq(~self.spi.sck)
+            m.d.comb += serial_clock.eq(~sck)
         else:
-            m.d.comb += serial_clock.eq(self.spi.sck)
+            m.d.comb += serial_clock.eq(sck)
 
         # Generate the leading and trailing edge detectors.
         # Note that we use rising and falling edge detectors, but call these leading and
@@ -248,8 +254,23 @@ class SPIDeviceInterface(Elaboratable):
     def elaborate(self, platform: Platform) -> Module:
         m = Module()
 
+        cs  = Signal()
+        sck = Signal()
+        sdi = Signal()
+
+        if self.skip_input_cdc:
+            m.d.comb += [
+                cs.eq(self.spi.cs),
+                sck.eq(self.spi.sck),
+                sdi.eq(self.spi.sdi),
+            ]
+        else:
+            m.submodules.cs_cdc  = FFSynchronizer(self.spi.cs,  cs)
+            m.submodules.sck_cdc = FFSynchronizer(self.spi.sck, sck)
+            m.submodules.sdi_cdc = FFSynchronizer(self.spi.sdi, sdi)
+
         # Grab signals that detect when we should shift in and out.
-        sample_edge, output_edge = self.spi_edge_detectors(m)
+        sample_edge, output_edge = self.spi_edge_detectors(m, sck)
 
         sample = Signal()
         output = Signal()
@@ -281,7 +302,7 @@ class SPIDeviceInterface(Elaboratable):
 
         # If the chip is selected, process our I/O:
         chip_selected = Signal()
-        m.d.comb += chip_selected.eq(self.spi.cs if not self.cs_idles_high else ~self.spi.cs)
+        m.d.comb += chip_selected.eq(cs if not self.cs_idles_high else ~cs)
 
         def output_one_bit(m):
             if self.msb_first:
@@ -305,9 +326,9 @@ class SPIDeviceInterface(Elaboratable):
                 ]
 
                 if self.msb_first:
-                    m.d.sync += current_rx.eq(Cat(self.spi.sdi, current_rx[:-1]))
+                    m.d.sync += current_rx.eq(Cat(sdi, current_rx[:-1]))
                 else:
-                    m.d.sync += current_rx.eq(Cat(current_rx[1:], self.spi.sdi))
+                    m.d.sync += current_rx.eq(Cat(current_rx[1:], sdi))
 
                 # If we're just completing a word, handle I/O.
                 with m.If(bit_count + 1 == self.word_size):
