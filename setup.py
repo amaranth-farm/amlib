@@ -21,7 +21,6 @@ setup(
     install_requires=[
         "scipy",
         "amaranth>=0.2,<5",
-        "amaranth-stdio",
         "importlib_metadata; python_version<'3.8'",
         "numpy",
     ],
