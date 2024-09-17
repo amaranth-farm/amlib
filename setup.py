@@ -20,8 +20,7 @@ setup(
     setup_requires=["wheel", "setuptools", "setuptools_scm"],
     install_requires=[
         "scipy",
-        "amaranth>=0.2,<=4",
-        "amaranth-soc",
+        "amaranth>=0.2,<5",
         "amaranth-stdio",
         "importlib_metadata; python_version<'3.8'",
         "numpy",
